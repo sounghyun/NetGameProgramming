@@ -1,0 +1,12 @@
+﻿  main_game.cpp
+c:\users\you28\desktop\대학\그 이전, 참고\cg\3d siege warfare\3d_siege_warfare\3d_siege_warfare\map.h(7): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(205): note: 'fopen' 선언을 참조하십시오.
+c:\users\you28\desktop\대학\그 이전, 참고\cg\3d siege warfare\3d_siege_warfare\3d_siege_warfare\map.h(12): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(1193): note: 'fscanf' 선언을 참조하십시오.
+main_game.cpp(140): warning C4800: 'int': 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
+  코드를 생성하고 있습니다.
+  0 of 32 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  코드를 생성했습니다.
+  3D_Siege_Warfare.vcxproj -> C:\Users\you28\Desktop\대학\그 이전, 참고\CG\3D Siege Warfare\3D_Siege_Warfare\Release\3D_Siege_Warfare.exe
