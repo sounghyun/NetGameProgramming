@@ -3,129 +3,48 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include "map.h"
+#include "struct_package.h"
 
-GLvoid drawScene(GLvoid);
-GLvoid Reshape(int w, int h);
-GLvoid Keyborad(unsigned char key, int x, int y);
-GLvoid SpecialKeyborad(int key, int x, int y);
-GLvoid TimerFunction(int value);
 
-GLint Vyspin, Vxspin;
-GLfloat Cmovex, Cmovey, Cmovez;
-GLfloat Cannonballx, Cannonbally = 10, Cannonballz;
-GLint angle = 0;
-bool viewmode = false;
-void main(int argc, char *argv[])
+bool collisionball(Ball p1, float x, float y, float z, float w, float h, float r)
 {
-	srand((unsigned int)time(NULL));
-	//초기화 함수들
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // 디스플레이 모드 설정
-	glutInitWindowPosition(100, 100); // 윈도우의 위치지정
-	glutInitWindowSize(800, 600); // 윈도우의 크기 지정
-	glutCreateWindow("3D_Siege_Warfare"); // 윈도우 생성 (윈도우 이름)
-	glutKeyboardFunc(Keyborad);
-	glutSpecialFunc(SpecialKeyborad);
-	glutTimerFunc(10, TimerFunction, 1);
-	glutDisplayFunc(drawScene); // 출력 함수의 지정
-	glutReshapeFunc(Reshape); // 다시 그리기 함수의 지정
-	glutMainLoop();
+	if (p1.x >= x - w && p1.x <= x + w && p1.z >= z - r && p1.z <= z + r && p1.y >= y - h && p1.y <= y + h)
+		return true;
+	return false;
 }
-// 윈도우 출력 함수s
-GLvoid drawScene(GLvoid)
+
+void Cannonball(Ball *cannonball)
 {
-	glClearColor(1, 1, 1, 1.0f); // 바탕은 흰색으로
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 설정된 색으로 전체를 칠하기
-
-	glLoadIdentity();
-	if (viewmode)
-	{
-		gluLookAt(0, 500, 5, 0, 0, 0, 0, 1, 0);
-		//glRotated(Vyspin, 0, 1, 0);
-		glTranslated(-250, 0, -100);
-	}
-	else
-	{
-		glTranslated(Cmovex, 0, Cmovey);
-		gluLookAt(0, 20, 50, 0, 0 + Cmovez, 0, 0, 1, 0);
-		glRotated(Vxspin, 1, 0, 0);
-		glRotated(Vyspin, 0, 1, 0);
-	}
-
-	glEnable(GL_DEPTH_TEST);		//은면제거
-
 	glPushMatrix();
-	glColor3d(0, 1, 0);
-	glBegin(GL_QUADS);
-	glVertex3d(-50, 0, -50);
-	glVertex3d(-50, 0, 50);
-	glVertex3d(50, 0, 50);
-	glVertex3d(50, 0, -50);
-	glEnd();
-
-	glPopMatrix();
-
-	glPushMatrix();
-	glColor3d(1, 0, 0);
-	glTranslated(Cannonballx, Cannonbally, Cannonballz);
-	glutSolidSphere(1, 30, 30);
-
-	glPopMatrix();
-
-
-	glDisable(GL_DEPTH_TEST);
-	glutSwapBuffers(); // 화면에 출력하기
-}
-GLvoid Reshape(int w, int h)
-{
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(60.0, w / h, 1.0, 1000.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-GLvoid Keyborad(unsigned char key, int x, int y)
-{
-	if (key == 'q')
-		Vyspin -= 5;
-	if (key == 'w')
-		Vyspin += 5;
-	if (key == 'e')
-		Vxspin -= 5;
-	if (key == 'r')
-		Vxspin += 5;
-	if (key == '+')
-		Cmovez += 5;
-	if (key == '-')
-		Cmovez -= 5;
-	if (key == 'i')
+	if (cannonball->exist)
 	{
-		Vyspin = 0;
-		Cmovex = Cmovey = Cmovez = 0;
+		glTranslated(cannonball->x, cannonball->y, cannonball->z);
+		glRotated(cannonball->angle, 0, 1, 0);
+
+		glTranslated(0, 0, -6);
+
+		glColor3d(1, 0, 0);
+
+		glutSolidSphere(0.5, 30, 30);
+
 	}
-	if (key == 'm')
-		viewmode = (viewmode + 1) % 2;
-	glutPostRedisplay();
+	glPopMatrix();
 }
 
-GLvoid SpecialKeyborad(int key, int x, int y)
+void Cannonball_timer(Ball *cannonball, GLfloat trasum)
 {
-	glutPostRedisplay();
-}
-GLvoid TimerFunction(int value)
-{
-	Cannonballx += 0.5 * cos(angle * (3.14/180));
-	Cannonbally -= (0.5 * sin(angle * (3.14 / 180))) - (1/2) * 9.8;
-	angle += 1;
-	if (Cannonbally < 0)
+	if (cannonball->exist)
 	{
-		angle = 0;
-		Cannonballx = 0;
-		Cannonbally = 10;
+		cannonball->x -= 1 * sin(cannonball->angle * (3.14 / 180));
+		cannonball->z -= 1 * cos(cannonball->angle * (3.14 / 180));
+		cannonball->y -= (0.7 * sin(cannonball->track * (3.14 / 180))) - (1 / 2) * 9.8;
+		if (cannonball->track < 90)
+			cannonball->track += trasum;
+		if (cannonball->y < 0)
+		{
+			cannonball->exist = false;
+		}
 	}
-	glutPostRedisplay();
-	glutTimerFunc(10, TimerFunction, 1);
+	if (cannonball->delaytime > 0)
+		cannonball->delaytime--;
 }

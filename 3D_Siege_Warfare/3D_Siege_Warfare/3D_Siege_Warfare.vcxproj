@@ -11,7 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cannonball.cpp" />
     <ClCompile Include="main_game.cpp" />
+    <ClCompile Include="struct_package.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cannonball.h" />

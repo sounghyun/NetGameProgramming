@@ -18,6 +18,12 @@
     <ClCompile Include="main_game.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="cannonball.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="struct_package.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="map.h">

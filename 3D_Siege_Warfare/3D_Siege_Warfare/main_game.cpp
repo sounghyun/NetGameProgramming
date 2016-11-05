@@ -291,8 +291,8 @@ GLvoid TimerFunction(int value)
 		if (!enemyGuardian.exist)
 			enemybase.hp-=2;
 	}
-	destroytower(&armybase);
-	destroytower(&enemybase);
+	armybase.destroytower();
+	enemybase.destroytower();
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -305,8 +305,8 @@ GLvoid TimerFunction(int value)
 		}
 		towerattck(&armytower[i], enemytank);
 		towerattck(&enemytower[i], armytank);
-		destroytower(&armytower[i]);
-		destroytower(&enemytower[i]);
+		armytower[i].destroytower();
+		enemytower[i].destroytower();
 	}
 
 	if (selfball.exist && armyGuardian.hp > 0 && collisionball(selfball, armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
@@ -355,16 +355,8 @@ GLvoid setup()
 	self.z = -35;
 	self.x = 100;
 
-	armybase.hp = 20;
-	armybase.x = 100;
-	armybase.z = -20;
-	armybase.angle = 180;
-	armybase.exist = true;
-
-	enemybase.hp = 20;
-	enemybase.x = 100;
-	enemybase.z = -480;
-	enemybase.exist = true;
+	armybase.setup(20, 100, -20, 180, true);
+	enemybase.setup(20, 100, -480, 0, true);
 
 	quake[0].x = 60;	quake[0].z = -120;
 	quake[1].x = 140;	quake[1].z = -120;
@@ -381,19 +373,16 @@ GLvoid setup()
 			{
 				if (z < 25)
 				{
-					armytower[armycount].hp = 10;
-					armytower[armycount].exist = true;
-					armytower[armycount].x = (Map[x][0][z].x + Map[x - 1][0][z].x) / 2;
-					armytower[armycount].z = Map[x][0][z].z;
-					armytower[armycount].angle = 180;
+					armytower[armycount].setup(10, \
+						(Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z,\
+						180, true);
 					armycount = (armycount + 1) % 6;
 				}
 				else
 				{
-					enemytower[enemycount].hp = 10;
-					enemytower[enemycount].exist = true;
-					enemytower[enemycount].x = (Map[x][0][z].x + Map[x - 1][0][z].x) / 2;
-					enemytower[enemycount].z = Map[x][0][z].z;
+					enemytower[enemycount].setup(10, \
+						(Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z, \
+						0, true);
 					enemycount = (enemycount + 1) % 6;
 				}
 			}

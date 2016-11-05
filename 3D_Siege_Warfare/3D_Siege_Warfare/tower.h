@@ -8,7 +8,7 @@ void tower(Tower *object)
 		for (int i = 0; i < 2; i++)
 		{
 			glBegin(GL_QUADS);
-			glColor3d(1.0f, 1.0f - ((10.0 - (GLdouble)object->hp) / 10), 1.0f - ((10.0 - (GLdouble)object->hp) / 10));
+			glColor3d(1.0f, 1.0f, 1.0f);
 			glVertex3d(-10, 22.5, 5);
 			glVertex3d(-10, 0, 5);
 			glVertex3d(10, 0, 5);

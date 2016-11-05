@@ -1,12 +1,104 @@
-﻿  main_game.cpp
-c:\users\you28\desktop\대학\그 이전, 참고\cg\3d siege warfare\3d_siege_warfare\3d_siege_warfare\map.h(7): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(205): note: 'fopen' 선언을 참조하십시오.
-c:\users\you28\desktop\대학\그 이전, 참고\cg\3d siege warfare\3d_siege_warfare\3d_siege_warfare\map.h(12): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(1193): note: 'fscanf' 선언을 참조하십시오.
-main_game.cpp(140): warning C4800: 'int': 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
-  코드를 생성하고 있습니다.
-  0 of 32 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
-  코드를 생성했습니다.
-  3D_Siege_Warfare.vcxproj -> C:\Users\you28\Desktop\대학\그 이전, 참고\CG\3D Siege Warfare\3D_Siege_Warfare\Release\3D_Siege_Warfare.exe
+﻿  struct_package.cpp
+struct_package.cpp(67): error C2511: 'void Tank::tankmove(int,Tank *,Tower *,Guardian *,Tower *)': 오버로드된 멤버 함수가 'Tank'에 없습니다.
+  c:\users\seunghyen\onedrive\documents\visual studio 2015\projects\3d_siege_warfare\3d_siege_warfare\struct_package.h(26): note: 'Tank' 선언을 참조하십시오.
+struct_package.cpp(68): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(68): error C2227: '->hp' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(70): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(70): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(71): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(71): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(72): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(72): error C2227: '->exist' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(76): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(76): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(76): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(76): error C2227: '->Sangle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(77): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(77): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(78): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(78): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(78): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(78): error C2227: '->Sangle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(79): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(79): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(80): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(80): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(80): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(80): error C2227: '->Sangle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(81): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(81): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(85): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(85): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(85): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(85): error C2227: '->Sangle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(86): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(86): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(87): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(87): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(87): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(87): error C2227: '->Sangle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(88): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(88): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(89): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(89): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(89): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(89): error C2227: '->Sangle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(90): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(90): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(93): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(93): error C2227: '->time' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(95): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(95): error C2227: '->x' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(95): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(96): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(96): error C2227: '->z' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(96): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(99): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(99): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(99): error C2228: '.exist' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(99): error C2228: '.delaytime' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(99): error C2227: '->hp' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(101): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(101): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(102): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(102): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(102): error C2228: '.z' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(102): error C2227: '->z' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(104): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(104): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(104): error C2228: '.z' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(104): error C2227: '->z' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(105): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(105): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(105): error C2228: '.x' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(105): error C2227: '->x' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(106): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(106): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(106): error C2228: '.track' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(107): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(107): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(107): error C2228: '.y' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(107): error C2227: '->y' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(108): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(108): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(108): error C2228: '.angle' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(108): error C2227: '->angle' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(109): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(109): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(109): error C2228: '.exist' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(110): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(110): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(110): error C2228: '.delaytime' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(114): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(114): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(116): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(116): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(116): error C2228: '.exist' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(118): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(118): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(118): error C2228: '.exist' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(125): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(125): error C2227: '->cannonball' 왼쪽은 클래스/구조체/공용 구조체/제네릭 형식을 가리켜야 합니다.
+struct_package.cpp(125): error C2228: '.exist' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
+struct_package.cpp(127): error C2671: 'Tank::tankmove': 정적 멤버 함수에 'this' 포인터가 없습니다.
+struct_package.cpp(127): fatal error C1003: 오류 수가 100개를 초과했습니다. 컴파일을 중지합니다.
