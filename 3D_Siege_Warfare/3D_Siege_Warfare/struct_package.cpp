@@ -1,3 +1,7 @@
+#ifndef STRUCK_PACKAGE
+
+#define STRUCK_PACKAGE
+
 #include "struct_package.h"
 #include "cannonball.h"
 
@@ -12,6 +16,9 @@ void Tank::createtank(float angle, int way)
 		this->z = -50;
 	this->x = 100;
 	this->y = 0;
+	this->h = 10;
+	this->w = 10;
+	this->r = 10;
 	this->exist = true;
 	this->delaytime = 1500;
 	if (way == 1)
@@ -63,7 +70,8 @@ void Tank::tank(bool body)
 
 }
 
-void Tank::tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Tower *baseobject)
+template<class Object>
+void Tank::tankmove(int way, Object *object)
 {
 	if (this->hp > 0)
 	{
@@ -113,38 +121,17 @@ void Tank::tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *gua
 	{
 		Cannonball_timer(&this->cannonball, 2);
 
-		if (this->cannonball.exist && baseobject->hp>0 && collisionball(this->cannonball, baseobject->x, baseobject->y, baseobject->z, 10, 10, 10))
-		{
-			this->cannonball.exist = false;
-			if (!guardianobject->exist)
-				baseobject->hp--;
-		}
-
-		for (int i = 0; i < 6; i++)
-		{
-			if (this->cannonball.exist && towerobject[i].hp>0 && collisionball(this->cannonball, towerobject[i].x, towerobject[i].y, towerobject[i].z, 10, 10, 5))
-			{
-				this->cannonball.exist = false;
-				towerobject[i].hp--;
-			}
-		}
-
-		if (this->cannonball.exist && guardianobject->hp > 0 && collisionball(this->cannonball, guardianobject->x, guardianobject->y, guardianobject->z, 10, 15, 5))
-		{
-			this->cannonball.exist = false;
-			guardianobject->hp--;
-		}
-
 		for (int i = 0; i < 9; i++)
 		{
-			if (this->cannonball.exist && tankobject[i].hp>0 && collisionball(this->cannonball, tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
+			if (this->cannonball.exist && object.hp>0 && collisionball(this->cannonball, object.x, object.y, object.z, object.h, object.w, object.r))
 			{
 				this->cannonball.exist = false;
-				tankobject[i].hp--;
+				object.hp--;
 			}
 		}
 	}
 }
+
 
 void Tank::destroytank()
 {
@@ -163,6 +150,9 @@ void Tank::destroytank()
 void Tower::setup(int hp, float x, float z, float angle, bool exist) {
 	this->hp = hp;
 	this->x = x, this->z = z;
+	this->h = 10;
+	this->w = 10;
+	this->r = 5;
 	this->angle = angle, this->exist = exist;
 };
 
@@ -332,3 +322,181 @@ void Tower::destroytower()
 			this->exist = false;
 	}
 }
+
+void Basetower::setup(int hp, float x, float z, float angle, bool exist) {
+	this->hp = hp;
+	this->x = x, this->z = z;
+	this->h = 10;
+	this->w = 10;
+	this->r = 10;
+	this->angle = angle, this->exist = exist;
+};
+
+void Basetower::basetower()
+{
+	glPushMatrix();
+	if (this->exist)
+	{
+		glTranslated(this->x, this->y, this->z);
+		glPushMatrix();
+		for (int i = 0; i < 2; i++)
+		{
+			glBegin(GL_QUADS);
+			glColor3d(1.0f, 1.0f, 1.0f);
+			glVertex3d(-10, 22.5, 5);
+			glVertex3d(-10, 0, 5);
+			glVertex3d(10, 0, 5);
+			glVertex3d(10, 22.5, 5);
+			glEnd();
+			glRotated(180, 0, 1, 0);
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			glBegin(GL_QUADS);
+			glColor3d(1.0f, 1.0f, 1.0f);
+			glVertex3d(-10, 22.5, 5);
+			glVertex3d(-10, 0, 5);
+			glVertex3d(-10, 0, -5);
+			glVertex3d(-10, 22.5, -5);
+			glEnd();
+			glRotated(180, 0, 1, 0);
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			glBegin(GL_QUADS);
+			glColor3d(1.0f, 1.0f, 1.0f);
+			glVertex3d(-10, 22.5, 5);
+			glVertex3d(10, 22.5, 5);
+			glVertex3d(10, 22.5, -5);
+			glVertex3d(-10, 22.5, -5);
+			glEnd();
+			glRotated(180, 0, 1, 0);
+		}
+		glPopMatrix();
+
+		glRotated(this->angle, 0, 1, 0);
+		// 상단 1/4
+		glPushMatrix();
+		for (int i = 0; i < 2; i++)
+		{
+			glBegin(GL_QUADS);
+			glColor3d(0.0f, 1.0f, 1.0f);
+			glVertex3d(-5, 22.5, 5);
+			glVertex3d(5, 22.5, 5);
+			glVertex3d(5, 22.5, -5);
+			glVertex3d(-5, 22.5, -5);
+			glEnd();
+			glRotated(180, 0, 1, 0);
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			glBegin(GL_QUADS);
+			glColor3d(0.0f, 1.0f, 1.0f);
+			glVertex3d(-5, 30, 5);
+			glVertex3d(-5, 22.5, 5);
+			glVertex3d(-5, 22.5, -5);
+			glVertex3d(-5, 30, -5);
+			glEnd();
+			glRotated(180, 0, 1, 0);
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			glBegin(GL_QUADS);
+			glColor3d(0.0f, 1.0f, 1.0f);
+			glVertex3d(-5, 30, 5);
+			glVertex3d(5, 30, 5);
+			glVertex3d(5, 22.5, -5);
+			glVertex3d(-5, 22.5, -5);
+			glEnd();
+			glRotated(180, 0, 1, 0);
+		}
+		glPopMatrix();
+
+		// 포신
+		glPushMatrix();
+		glBegin(GL_QUADS);
+		glColor3d(1.0f, 0.0f, 1.0f);
+		glVertex3d(-2, 28, 5);
+		glVertex3d(2, 28, 5);
+		glVertex3d(2, 28, 15);
+		glVertex3d(-2, 28, 15);
+		glEnd();
+
+		glBegin(GL_QUADS);
+		glColor3d(1.0f, 0.0f, 1.0f);
+		glVertex3d(-2, 28, 5);
+		glVertex3d(-2, 24, 5);
+		glVertex3d(-2, 24, 15);
+		glVertex3d(-2, 28, 15);
+		glEnd();
+
+		glBegin(GL_QUADS);
+		glColor3d(1.0f, 0.0f, 1.0f);
+		glVertex3d(-2, 24, 5);
+		glVertex3d(2, 24, 5);
+		glVertex3d(2, 24, 15);
+		glVertex3d(-2, 24, 15);
+		glEnd();
+
+		glBegin(GL_QUADS);
+		glColor3d(1.0f, 0.0f, 1.0f);
+		glVertex3d(2, 28, 5);
+		glVertex3d(2, 24, 5);
+		glVertex3d(2, 24, 15);
+		glVertex3d(2, 28, 15);
+		glEnd();
+
+		glBegin(GL_QUADS);
+		glColor3d(1.0f, 0.0f, 1.0f);
+		glVertex3d(-2, 28, 15);
+		glVertex3d(2, 28, 15);
+		glVertex3d(2, 24, 15);
+		glVertex3d(-2, 24, 15);
+		glEnd();
+		glPopMatrix();
+	}
+	glPopMatrix();
+}
+
+void Basetower::towerattck(Tank *tankobject)
+{
+	if (this->cannonball.exist == false && this->cannonball.delaytime == 0 && this->hp > 0)
+	{
+		if (this->angle)
+			this->cannonball.z = this->z - 10;
+		else
+			this->cannonball.z = this->z + 10;
+		this->cannonball.x = this->x;
+		this->cannonball.track = 0;
+		this->cannonball.y = this->y + 25;
+		this->cannonball.angle = this->angle + 180;
+		this->cannonball.exist = true;
+		this->cannonball.delaytime = 80;
+	}
+	else
+	{
+		Cannonball_timer(&this->cannonball, 4);
+
+		for (int i = 0; i < 9; i++)
+		{
+			if (this->cannonball.exist && tankobject[i].hp>0 && collisionball(this->cannonball, tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
+			{
+				this->cannonball.exist = false;
+				tankobject[i].hp -= 2;
+			}
+			tankobject[i].destroytank();
+		}
+	}
+}
+
+void Basetower::destroytower()
+{
+	if (this->hp <= 0 && this->exist)
+	{
+		this->y -= 0.1;
+		if (this->y + 15 < 0)
+			this->exist = false;
+	}
+}
+
+#endif

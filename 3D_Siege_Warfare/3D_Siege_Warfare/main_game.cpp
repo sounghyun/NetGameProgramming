@@ -6,8 +6,6 @@
 #include "struct_package.h"
 #include "map.h"
 #include "cannonball.h"
-#include "tank.h"
-#include "tower.h"
 #include "guardian.h"
 
 GLvoid drawScene(GLvoid);
@@ -23,7 +21,7 @@ bool quakecollision(Tank p1, float x, float z, float w, float r);
 bool viewmode = false;
 GLint Ttime = 0;
 Point quake[5];
-Tower armybase, enemybase;
+Basetower armybase, enemybase;
 Guardian armyGuardian, enemyGuardian;
 Tower armytower[6], enemytower[6];
 Tank self, armytank[9], enemytank[9];
@@ -72,13 +70,13 @@ GLvoid drawScene(GLvoid)
 	glPushMatrix();
 	ground();
 
-	base(&armybase);
-	base(&enemybase);
+	armybase.basetower();
+	enemybase.basetower();
 
 	for (int i = 0; i < 6; i++)
 	{
-		tower(&armytower[i]);
-		tower(&enemytower[i]);
+		armytower[i].tower();
+		enemytower[i].tower();
 		Cannonball(&armytower[i].cannonball);
 		Cannonball(&enemytower[i].cannonball);
 	}
@@ -86,9 +84,9 @@ GLvoid drawScene(GLvoid)
 
 	glPushMatrix();
 	if (viewmode)
-		tank(&self, true);
+		self.tank(true);
 	else
-		tank(&self, false);
+		self.tank(false);
 
 	Cannonball(&selfball);
 	glPopMatrix();
@@ -98,13 +96,13 @@ GLvoid drawScene(GLvoid)
 	{
 		if (armytank[i].exist)
 		{
-			tank(&armytank[i], true);
+			armytank[i].tank(true);
 			Cannonball(&armytank[i].cannonball);
 		}
 
 		if (enemytank[i].exist)
 		{
-			tank(&enemytank[i], true);
+			enemytank[i].tank(true);
 			Cannonball(&enemytank[i].cannonball);
 		}
 	}
@@ -182,9 +180,9 @@ GLvoid TimerFunction(int value)
 		for (int i = 0; i < 6; i++)
 		{
 			if (!armytank[i].exist)
-				createtank(&armytank[i], 0, i % 3);
+				armytank[i].createtank(0, i % 3);
 			if (!enemytank[i].exist)
-				createtank(&enemytank[i], 180, i % 3);
+				enemytank[i].createtank(180, i % 3);
 		}
 	}
 	if (Ttime > 1600)
@@ -192,9 +190,9 @@ GLvoid TimerFunction(int value)
 		for (int i = 0; i < 9; i++)
 		{
 			if (!armytank[i].exist)
-				createtank(&armytank[i], 0, i % 3);
+				armytank[i].createtank(0, i % 3);
 			if (!enemytank[i].exist)
-				createtank(&enemytank[i], 180, i % 3);
+				enemytank[i].createtank(180, i % 3);
 		}
 	}
 	else
@@ -202,9 +200,9 @@ GLvoid TimerFunction(int value)
 		for (int i = 0; i < 3; i++)
 		{
 			if (!armytank[i].exist)
-				createtank(&armytank[i], 0, i % 3);
+				armytank[i].createtank(0, i % 3);
 			if (!enemytank[i].exist)
-				createtank(&enemytank[i], 180, i % 3);
+				enemytank[i].createtank(180, i % 3);
 		}
 	}
 	if (UDcontral == 1)
@@ -303,8 +301,8 @@ GLvoid TimerFunction(int value)
 			selfball.exist = false;
 			enemytower[i].hp-=2;
 		}
-		towerattck(&armytower[i], enemytank);
-		towerattck(&enemytower[i], armytank);
+		armytower[i].towerattck(enemytank);
+		enemytower[i].towerattck(armytank);
 		armytower[i].destroytower();
 		enemytower[i].destroytower();
 	}
@@ -328,16 +326,26 @@ GLvoid TimerFunction(int value)
 			selfball.exist = false;
 			enemytank[i].hp-=2;
 		}
-		destroytank(&armytank[i]);
-		destroytank(&enemytank[i]);
+		armytank[i].destroytank();
+		enemytank[i].destroytank();
 	}
 
 	for (int i = 0; i < 9; i++)
 	{
-		if (armytank[i].exist)
-			tankmove(&armytank[i], i % 3 + 1, enemytank, enemytower, &enemyGuardian, &enemybase);
-		if (enemytank[i].exist)
-			tankmove(&enemytank[i], i % 3 + 1, armytank, armytower, &armyGuardian, &armybase);
+		if (armytank[i].exist) {
+			for (int j = 0; j < 9; j++)
+				armytank[i].tankmove(i % 3 + 1, &enemytank[j]);
+			for (int j = 0; j < 6; j++)
+				armytank[i].tankmove(i % 3 + 1, &enemytower[j]);
+			armytank[i].tankmove(i % 3 + 1, &enemyGuardian);
+			armytank[i].tankmove(i % 3 + 1, &enemybase);
+		}
+		if (enemytank[i].exist) {
+			enemytank[i].tankmove(i % 3 + 1, armytank);
+			enemytank[i].tankmove(i % 3 + 1, armytower);
+			enemytank[i].tankmove(i % 3 + 1, &armyGuardian);
+			enemytank[i].tankmove(i % 3 + 1, &armybase);
+		}
 	}
 	guardianmove(&armyGuardian);
 	guardianmove(&enemyGuardian);
@@ -394,8 +402,8 @@ GLvoid setup()
 
 	for (int i = 0; i < 3; i++)
 	{
-		createtank(&armytank[i], 0, i);
-		createtank(&enemytank[i], 180, i);
+		armytank[i].createtank(0, i);
+		enemytank[i].createtank(180, i);
 	}
 }
 
