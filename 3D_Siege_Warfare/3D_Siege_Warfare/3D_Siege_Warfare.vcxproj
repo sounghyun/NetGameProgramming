@@ -11,11 +11,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="basetower.cpp" />
     <ClCompile Include="cannonball.cpp" />
     <ClCompile Include="main_game.cpp" />
     <ClCompile Include="struct_package.cpp" />
+    <ClCompile Include="tank.cpp" />
+    <ClCompile Include="tower.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="basetower.h" />
     <ClInclude Include="cannonball.h" />
     <ClInclude Include="guardian.h" />
     <ClInclude Include="map.h" />

@@ -1,13 +1,9 @@
-﻿  cannonball.cpp
-  main_game.cpp
-c:\users\seunghyen\onedrive\documents\visual studio 2015\projects\3d_siege_warfare\3d_siege_warfare\map.h(7): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(205): note: 'fopen' 선언을 참조하십시오.
-c:\users\seunghyen\onedrive\documents\visual studio 2015\projects\3d_siege_warfare\3d_siege_warfare\map.h(12): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\stdio.h(1193): note: 'fscanf' 선언을 참조하십시오.
-main_game.cpp(138): warning C4800: 'int': 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
-  struct_package.cpp
-main_game.obj : error LNK2001: "public: void __thiscall Tank::tankmove<class Basetower>(int,class Basetower *)" (??$tankmove@VBasetower@@@Tank@@QAEXHPAVBasetower@@@Z) 외부 기호를 확인할 수 없습니다.
-main_game.obj : error LNK2001: "public: void __thiscall Tank::tankmove<class Guardian>(int,class Guardian *)" (??$tankmove@VGuardian@@@Tank@@QAEXHPAVGuardian@@@Z) 외부 기호를 확인할 수 없습니다.
-main_game.obj : error LNK2001: "public: void __thiscall Tank::tankmove<class Tower>(int,class Tower *)" (??$tankmove@VTower@@@Tank@@QAEXHPAVTower@@@Z) 외부 기호를 확인할 수 없습니다.
-main_game.obj : error LNK2001: "public: void __thiscall Tank::tankmove<class Tank>(int,class Tank *)" (??$tankmove@VTank@@@Tank@@QAEXHPAV0@@Z) 외부 기호를 확인할 수 없습니다.
-C:\Users\SeungHyen\OneDrive\Documents\Visual Studio 2015\Projects\3D_Siege_Warfare\Release\3D_Siege_Warfare.exe : fatal error LNK1120: 4개의 확인할 수 없는 외부 참조입니다.
+﻿  basetower.cpp
+  tank.cpp
+  tower.cpp
+  코드를 생성하고 있습니다.
+  40 of 48 functions (83.3%) were compiled, the rest were copied from previous compilation.
+    26 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  코드를 생성했습니다.
+  3D_Siege_Warfare.vcxproj -> C:\Users\SeungHyen\OneDrive\Documents\Visual Studio 2015\Projects\3D_Siege_Warfare\Release\3D_Siege_Warfare.exe

@@ -24,24 +24,36 @@
     <ClCompile Include="struct_package.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="tank.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="basetower.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="tower.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="map.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="tank.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="cannonball.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="tower.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="guardian.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="struct_package.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="tank.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="tower.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="basetower.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

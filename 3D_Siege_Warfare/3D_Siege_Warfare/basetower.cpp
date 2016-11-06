@@ -1,20 +1,20 @@
-#ifndef TOWER
-#define TOWER
+#ifndef BASETOWER
+#define BASETOWER
 
-#include "tower.h"
+#include "basetower.h"
 #include "cannonball.h"
 #include "tank.h"
 
-void Tower::setup(int hp, float x, float z, float angle, bool exist) {
+void Basetower::setup(int hp, float x, float z, float angle, bool exist) {
 	this->hp = hp;
 	this->x = x, this->z = z;
 	this->h = 10;
 	this->w = 10;
-	this->r = 5;
+	this->r = 10;
 	this->angle = angle, this->exist = exist;
 };
 
-void Tower::tower()
+void Basetower::basetower()
 {
 	glPushMatrix();
 	if (this->exist)
@@ -140,7 +140,7 @@ void Tower::tower()
 	glPopMatrix();
 }
 
-void Tower::towerattck(Tank *tankobject)
+void Basetower::towerattck(Tank *tankobject)
 {
 	if (this->cannonball.exist == false && this->cannonball.delaytime == 0 && this->hp > 0)
 	{
@@ -171,7 +171,7 @@ void Tower::towerattck(Tank *tankobject)
 	}
 }
 
-void Tower::destroytower()
+void Basetower::destroytower()
 {
 	if (this->hp <= 0 && this->exist)
 	{
@@ -180,4 +180,5 @@ void Tower::destroytower()
 			this->exist = false;
 	}
 }
-#endif // !TOWER
+
+#endif // !BASETOWER

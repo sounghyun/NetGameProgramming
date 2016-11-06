@@ -1,11 +1,10 @@
-#ifndef TOWER_H
-#define TOWER_H
+#ifndef BASETOWER_H
+#define BASETOWER_H
 
 #include "struct_package.h"
+#include "tank.h"
 
-class Tank;
-
-class Tower
+class Basetower
 {
 public:
 	int hp;
@@ -15,7 +14,7 @@ public:
 	bool exist;
 	Ball cannonball;
 
-	Tower() {};
+	Basetower() {};
 
 	void setup(int hp, float x, float z, float angle, bool exist);
 
@@ -26,11 +25,11 @@ public:
 	int GetAngle() { return angle; };
 	int GetExist() { return exist; };
 
-	void tower();
+	void basetower();
 
 	virtual void towerattck(Tank *tankobject);
 
 	void destroytower();
 };
 
-#endif // !TOWER_H
+#endif // !BASETOWER_H

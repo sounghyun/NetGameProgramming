@@ -1,135 +1,171 @@
-#include <GL/glut.h> // includes gl.h glu.h
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
+#ifndef TANK
+#define TANK
 
-GLvoid drawScene(GLvoid);
-GLvoid Reshape(int w, int h);
-GLvoid Keyborad(unsigned char key, int x, int y);
-GLvoid SpecialKeyborad(int key, int x, int y);
-GLvoid TimerFunction(int value);
+#include "tank.h"
+#include "cannonball.h"
+#include "tower.h"
+#include "basetower.h"
 
-GLint Vyspin, Vxspin;
-GLfloat Cmovex, Cmovey, Cmovez;
-GLfloat Cannonballx, Cannonbally = 10, Cannonballz;
-GLint Tspin = 0;
-bool viewmode = false;
-void main(int argc, char *argv[])
+void Tank::createtank(float angle, int way)
 {
-	srand((unsigned int)time(NULL));
-	//초기화 함수들
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // 디스플레이 모드 설정
-	glutInitWindowPosition(100, 100); // 윈도우의 위치지정
-	glutInitWindowSize(800, 600); // 윈도우의 크기 지정
-	glutCreateWindow("3D_Siege_Warfare"); // 윈도우 생성 (윈도우 이름)
-	glutKeyboardFunc(Keyborad);
-	glutSpecialFunc(SpecialKeyborad);
-	glutTimerFunc(10, TimerFunction, 1);
-	glutDisplayFunc(drawScene); // 출력 함수의 지정
-	glutReshapeFunc(Reshape); // 다시 그리기 함수의 지정
-	glutMainLoop();
+	this->hp = 5;
+	this->Sangle = angle;
+	this->angle = 90 * (way - 1) + angle;
+	if (this->Sangle)
+		this->z = -450;
+	else
+		this->z = -50;
+	this->x = 100;
+	this->y = 0;
+	this->h = 10;
+	this->w = 10;
+	this->r = 10;
+	this->exist = true;
+	this->delaytime = 1500;
+	if (way == 1)
+		this->time = 2000;
+	else
+		this->time = 2730;
 }
-// 윈도우 출력 함수s
-GLvoid drawScene(GLvoid)
-{
-	glClearColor(1, 1, 1, 1.0f); // 바탕은 흰색으로
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 설정된 색으로 전체를 칠하기
 
-	glLoadIdentity();
-	if (viewmode)
+void Tank::tank(bool body)
+{
+	glPushMatrix(); // 탱크
+	if (!body)
+		glTranslated(0, this->quake, 0);
+
+	glTranslated(this->x, this->y, this->z + 1);
+	glRotated(this->angle, 0, 1, 0);
+
+	if (body)
 	{
-		gluLookAt(0, 500, 5, 0, 0, 0, 0, 1, 0);
-		//glRotated(Vyspin, 0, 1, 0);
-		glTranslated(-250, 0, -100);
+		glScaled(0.5, 0.5, 0.5);
+
+		glColor3d(0, 0, 1);
+		glTranslated(0, 2, 0);
+		glScaled(2, 1, 2);
+		glutSolidCube(5);
+
+
+		glTranslated(0, 2, 0);
+		glScaled(1, 2.5, 1);
+		glutSolidCube(3);
+
+		glScaled(0.5, 1, 0.5);
+
+		glColor3d(1, 0, 1);
+		glTranslated(0, 1, -5);
+		glScaled(1, 0.5, 5);
+		glutSolidCube(1);
 	}
 	else
 	{
-		glTranslated(Cmovex, 0, Cmovey);
-		gluLookAt(0, 10, 30, 0, 10 + Cmovez, 0, 0, 1, 0);
-		glRotated(Vxspin, 1, 0, 0);
-		glRotated(Vyspin, 0, 1, 0);
+		glColor3d(1, 0, 1);
+		glTranslated(0, -1, -2);
+		glRotated(30, 1, 0, 0);
+		glScaled(0.5, 0.25, 3);
+		glutSolidCube(0.75);
 	}
 
-	glEnable(GL_DEPTH_TEST);		//은면제거
-
-	glPushMatrix();
-	glColor3d(0, 1, 0);
-	glBegin(GL_QUADS);
-	glVertex3d(-50, 0, -50);
-	glVertex3d(-50, 0, 50);
-	glVertex3d(50, 0, 50);
-	glVertex3d(50, 0, -50);
-	glEnd();
 	glPopMatrix();
 
-	glPushMatrix(); // 탱크
-	glColor3d(0, 0, 1);
-	glTranslated(0, 2, 0);
-	glScaled(2, 1, 2);
-	glutSolidCube(5);
-
-	glRotated(Tspin, 0, 1, 0);
-
-	glTranslated(0, 2, 0);
-	glScaled(1, 2.5, 1);
-	glutSolidCube(3);
-
-	glScaled(0.5, 1, 0.5);
-
-	glTranslated(0, 1, 3);
-	glScaled(1, 0.5, 4);
-	glutSolidCube(2);
-	glPopMatrix();
-
-	glDisable(GL_DEPTH_TEST);
-	glutSwapBuffers(); // 화면에 출력하기
-}
-GLvoid Reshape(int w, int h)
-{
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(60.0, w / h, 1.0, 1000.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 }
 
-GLvoid Keyborad(unsigned char key, int x, int y)
+void Tank::tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject)
 {
-	if (key == 'q')
-		Vyspin -= 5;
-	if (key == 'w')
-		Vyspin += 5;
-	if (key == 'e')
-		Vxspin -= 5;
-	if (key == 'r')
-		Vxspin += 5;
-	if (key == '+')
-		Cmovez += 5;
-	if (key == '-')
-		Cmovez -= 5;
-	if (key == 'i')
+	if (this->hp > 0)
 	{
-		Vyspin = 0;
-		Cmovex = Cmovey = Cmovez = 0;
+		this->time--;
+		if (this->time < -300)
+			this->exist = false;
+
+		if (way == 1)
+		{
+			if (this->time < 2400 && this->time && this->angle < 0 + this->Sangle)
+				this->angle++;
+			if (this->time < 430 && this->time && this->angle < 90 + this->Sangle)
+				this->angle++;
+			if (this->time == 0 && this->angle > 0 + this->Sangle)
+				this->angle--;
+		}
+		if (way == 3)
+		{
+			if (this->time < 2400 && this->time && this->angle > 0 + this->Sangle)
+				this->angle--;
+			if (this->time < 430 && this->time && this->angle > -90 + this->Sangle)
+				this->angle--;
+			if (this->time == 0 && this->angle < 0 + this->Sangle)
+				this->angle++;
+		}
+
+		if (this->time > 0)
+		{
+			this->x -= 0.2*sin(this->angle * (3.14 / 180));
+			this->z -= 0.2*cos(this->angle * (3.14 / 180));
+		}
 	}
-	if (key == 'm')
-		viewmode = (viewmode + 1) % 2;
-	glutPostRedisplay();
+	if (this->cannonball.exist == false && this->cannonball.delaytime == 0 && this->hp > 0)
+	{
+		if (this->angle)
+			this->cannonball.z = this->z - 2;
+		else
+			this->cannonball.z = this->z + 2;
+		this->cannonball.x = this->x;
+		this->cannonball.track = 0;
+		this->cannonball.y = this->y + 3;
+		this->cannonball.angle = this->angle;
+		this->cannonball.exist = true;
+		this->cannonball.delaytime = 60;
+	}
+	else
+	{
+		Cannonball_timer(&this->cannonball, 2);
+
+		if (this->cannonball.exist && baseobject->hp>0 && collisionball(this->cannonball, baseobject->x, baseobject->y, baseobject->z, 10, 10, 10))
+		{
+			this->cannonball.exist = false;
+			if (!guardianobject->exist)
+				baseobject->hp--;
+		}
+
+		for (int i = 0; i < 6; i++)
+		{
+			if (this->cannonball.exist && towerobject[i].hp>0 && collisionball(this->cannonball, towerobject[i].x, towerobject[i].y, towerobject[i].z, 10, 10, 5))
+			{
+				this->cannonball.exist = false;
+				towerobject[i].hp--;
+			}
+		}
+
+		if (this->cannonball.exist && guardianobject->hp > 0 && collisionball(this->cannonball, guardianobject->x, guardianobject->y, guardianobject->z, 10, 15, 5))
+		{
+			this->cannonball.exist = false;
+			guardianobject->hp--;
+		}
+
+		for (int i = 0; i < 9; i++)
+		{
+			if (this->cannonball.exist && tankobject[i].hp>0 && collisionball(this->cannonball, tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
+			{
+				this->cannonball.exist = false;
+				tankobject[i].hp--;
+			}
+		}
+	}
 }
 
-GLvoid SpecialKeyborad(int key, int x, int y)
+void Tank::destroytank()
 {
-	if (key == GLUT_KEY_LEFT)
-		Tspin -= 5;
-	if (key == GLUT_KEY_RIGHT)
-		Tspin += 5;
-	glutPostRedisplay();
+	if (this->hp <= 0 && this->exist)
+	{
+		this->y -= 0.1;
+		if (this->y + 5 < 0)
+		{
+			this->delaytime--;
+			if (this->delaytime == 0)
+				this->exist = false;
+		}
+	}
 }
-GLvoid TimerFunction(int value)
-{
-	glutPostRedisplay();
-	glutTimerFunc(10, TimerFunction, 1);
-}
+
+#endif // !TANK

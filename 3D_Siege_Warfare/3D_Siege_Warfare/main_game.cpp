@@ -5,6 +5,9 @@
 #include <math.h>
 #include "struct_package.h"
 #include "map.h"
+#include "tank.h"
+#include "tower.h"
+#include "basetower.h"
 #include "cannonball.h"
 #include "guardian.h"
 
@@ -332,20 +335,10 @@ GLvoid TimerFunction(int value)
 
 	for (int i = 0; i < 9; i++)
 	{
-		if (armytank[i].exist) {
-			for (int j = 0; j < 9; j++)
-				armytank[i].tankmove(i % 3 + 1, &enemytank[j]);
-			for (int j = 0; j < 6; j++)
-				armytank[i].tankmove(i % 3 + 1, &enemytower[j]);
-			armytank[i].tankmove(i % 3 + 1, &enemyGuardian);
-			armytank[i].tankmove(i % 3 + 1, &enemybase);
-		}
-		if (enemytank[i].exist) {
-			enemytank[i].tankmove(i % 3 + 1, armytank);
-			enemytank[i].tankmove(i % 3 + 1, armytower);
-			enemytank[i].tankmove(i % 3 + 1, &armyGuardian);
-			enemytank[i].tankmove(i % 3 + 1, &armybase);
-		}
+		if (armytank[i].exist)
+			armytank[i].tankmove(i % 3 + 1, enemytank, enemytower, &enemyGuardian, &enemybase);
+		if (enemytank[i].exist)
+			enemytank[i].tankmove(i % 3 + 1, armytank, armytower, &armyGuardian, &armybase);
 	}
 	guardianmove(&armyGuardian);
 	guardianmove(&enemyGuardian);

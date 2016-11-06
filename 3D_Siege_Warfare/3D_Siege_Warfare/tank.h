@@ -1,13 +1,34 @@
 #ifndef TANK_H
 #define TANK_H
 
+#include"struct_package.h"
 
-void createtank(Tank *tank, float angle, int way);
+class Tower;
+class Basetower;
+class Guardian;
 
-void tank(Tank *tank, bool body);
+class Tank
+{
+public:
+	int hp;
+	float x, y, z;
+	int w, h, r;
+	int angle, Sangle;
+	int time;
+	int delaytime;
+	int quake;
+	bool exist;
+	Ball cannonball;
 
-void tankmove(Tank * tank, int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Tower *baseobject);
+	Tank() {};
 
-void destroytank(Tank *object);
+	void createtank(float angle, int way);
+
+	void tank(bool body);
+
+	virtual void tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
+
+	void destroytank();
+};
 
 #endif // !TANK_H
