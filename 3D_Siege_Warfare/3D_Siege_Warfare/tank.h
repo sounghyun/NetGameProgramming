@@ -1,7 +1,8 @@
 #ifndef TANK_H
 #define TANK_H
 
-#include"struct_package.h"
+#include "struct_package.h"
+#include "cannonball.h"
 
 class Tower;
 class Basetower;
@@ -24,7 +25,7 @@ public:
 
 	void createtank(float angle, int way);
 
-	void tank(bool body);
+	void ranbertank(bool body);
 
 	virtual void tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
 

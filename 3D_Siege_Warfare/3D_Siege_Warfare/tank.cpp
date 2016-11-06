@@ -2,9 +2,9 @@
 #define TANK
 
 #include "tank.h"
-#include "cannonball.h"
 #include "tower.h"
 #include "basetower.h"
+#include "guardian.h"
 
 void Tank::createtank(float angle, int way)
 {
@@ -28,7 +28,7 @@ void Tank::createtank(float angle, int way)
 		this->time = 2730;
 }
 
-void Tank::tank(bool body)
+void Tank::ranbertank(bool body)
 {
 	glPushMatrix(); // ÅÊÅ©
 	if (!body)
@@ -119,9 +119,9 @@ void Tank::tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *gua
 	}
 	else
 	{
-		Cannonball_timer(&this->cannonball, 2);
+		this->cannonball.Cannonball_timer(2);
 
-		if (this->cannonball.exist && baseobject->hp>0 && collisionball(this->cannonball, baseobject->x, baseobject->y, baseobject->z, 10, 10, 10))
+		if (this->cannonball.exist && baseobject->hp>0 && this->cannonball.collisionball(baseobject->x, baseobject->y, baseobject->z, 10, 10, 10))
 		{
 			this->cannonball.exist = false;
 			if (!guardianobject->exist)
@@ -130,14 +130,14 @@ void Tank::tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *gua
 
 		for (int i = 0; i < 6; i++)
 		{
-			if (this->cannonball.exist && towerobject[i].hp>0 && collisionball(this->cannonball, towerobject[i].x, towerobject[i].y, towerobject[i].z, 10, 10, 5))
+			if (this->cannonball.exist && towerobject[i].hp>0 && this->cannonball.collisionball(towerobject[i].x, towerobject[i].y, towerobject[i].z, 10, 10, 5))
 			{
 				this->cannonball.exist = false;
 				towerobject[i].hp--;
 			}
 		}
 
-		if (this->cannonball.exist && guardianobject->hp > 0 && collisionball(this->cannonball, guardianobject->x, guardianobject->y, guardianobject->z, 10, 15, 5))
+		if (this->cannonball.exist && guardianobject->hp > 0 && this->cannonball.collisionball(guardianobject->x, guardianobject->y, guardianobject->z, 10, 15, 5))
 		{
 			this->cannonball.exist = false;
 			guardianobject->hp--;
@@ -145,7 +145,7 @@ void Tank::tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *gua
 
 		for (int i = 0; i < 9; i++)
 		{
-			if (this->cannonball.exist && tankobject[i].hp>0 && collisionball(this->cannonball, tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
+			if (this->cannonball.exist && tankobject[i].hp>0 && this->cannonball.collisionball(tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
 			{
 				this->cannonball.exist = false;
 				tankobject[i].hp--;

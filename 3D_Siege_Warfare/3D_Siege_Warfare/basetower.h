@@ -2,7 +2,9 @@
 #define BASETOWER_H
 
 #include "struct_package.h"
-#include "tank.h"
+#include "cannonball.h"
+
+class Tank;
 
 class Basetower
 {
@@ -25,9 +27,9 @@ public:
 	int GetAngle() { return angle; };
 	int GetExist() { return exist; };
 
-	void basetower();
+	void ranberbasetower();
 
-	virtual void towerattck(Tank *tankobject);
+	void towerattck(Tank *tankobject);
 
 	void destroytower();
 };

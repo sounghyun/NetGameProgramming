@@ -2,7 +2,6 @@
 #define TOWER
 
 #include "tower.h"
-#include "cannonball.h"
 #include "tank.h"
 
 void Tower::setup(int hp, float x, float z, float angle, bool exist) {
@@ -14,7 +13,7 @@ void Tower::setup(int hp, float x, float z, float angle, bool exist) {
 	this->angle = angle, this->exist = exist;
 };
 
-void Tower::tower()
+void Tower::ranbertower()
 {
 	glPushMatrix();
 	if (this->exist)
@@ -157,11 +156,11 @@ void Tower::towerattck(Tank *tankobject)
 	}
 	else
 	{
-		Cannonball_timer(&this->cannonball, 4);
+		this->cannonball.Cannonball_timer(4);
 
 		for (int i = 0; i < 9; i++)
 		{
-			if (this->cannonball.exist && tankobject[i].hp>0 && collisionball(this->cannonball, tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
+			if (this->cannonball.exist && tankobject[i].hp>0 && this->cannonball.collisionball(tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
 			{
 				this->cannonball.exist = false;
 				tankobject[i].hp -= 2;

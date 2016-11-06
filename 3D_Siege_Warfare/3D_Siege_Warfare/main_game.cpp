@@ -5,10 +5,10 @@
 #include <math.h>
 #include "struct_package.h"
 #include "map.h"
+#include "cannonball.h"
 #include "tank.h"
 #include "tower.h"
 #include "basetower.h"
-#include "cannonball.h"
 #include "guardian.h"
 
 GLvoid drawScene(GLvoid);
@@ -73,25 +73,25 @@ GLvoid drawScene(GLvoid)
 	glPushMatrix();
 	ground();
 
-	armybase.basetower();
-	enemybase.basetower();
+	armybase.ranberbasetower();
+	enemybase.ranberbasetower();
 
 	for (int i = 0; i < 6; i++)
 	{
-		armytower[i].tower();
-		enemytower[i].tower();
-		Cannonball(&armytower[i].cannonball);
-		Cannonball(&enemytower[i].cannonball);
+		armytower[i].ranbertower();
+		enemytower[i].ranbertower();
+		armytower[i].cannonball.ranberCannonball();
+		enemytower[i].cannonball.ranberCannonball();
 	}
 	glPopMatrix();
 
 	glPushMatrix();
 	if (viewmode)
-		self.tank(true);
+		self.ranbertank(true);
 	else
-		self.tank(false);
+		self.ranbertank(false);
 
-	Cannonball(&selfball);
+	selfball.ranberCannonball();
 	glPopMatrix();
 
 	glPushMatrix();
@@ -99,19 +99,19 @@ GLvoid drawScene(GLvoid)
 	{
 		if (armytank[i].exist)
 		{
-			armytank[i].tank(true);
-			Cannonball(&armytank[i].cannonball);
+			armytank[i].ranbertank(true);
+			armytank[i].cannonball.ranberCannonball();
 		}
 
 		if (enemytank[i].exist)
 		{
-			enemytank[i].tank(true);
-			Cannonball(&enemytank[i].cannonball);
+			enemytank[i].ranbertank(true);
+			enemytank[i].cannonball.ranberCannonball();
 		}
 	}
 
-	guardian(&armyGuardian);
-	guardian(&enemyGuardian);
+	armyGuardian.ranberguardian();
+	enemyGuardian.ranberguardian();
 	glPopMatrix();
 
 	glDisable(GL_DEPTH_TEST);
@@ -275,18 +275,18 @@ GLvoid TimerFunction(int value)
 				if (Map[x][y][z].state == 3 && collision(Map[x][y][z], self))
 					self.y += 10;
 
-	Cannonball_timer(&selfball, 0.2);
+	selfball.Cannonball_timer(0.2);
 
 	if (selfball.exist)
 		for (int y = 0; y < 3; y++)
 			for (int x = 0; x < 20; x++)
 				for (int z = 0; z < 50; z++)
-					if (Map[x][y][z].state == 1 && collisionball(selfball, Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
+					if (Map[x][y][z].state == 1 && selfball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
 						selfball.exist = false;
 
-	if (selfball.exist && armybase.hp>0 && collisionball(selfball, armybase.x, armybase.y, armybase.z, 10, 10, 10))
+	if (selfball.exist && armybase.hp>0 && selfball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
 		selfball.exist = false;
-	if (selfball.exist && armybase.hp>0 && collisionball(selfball, enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
+	if (selfball.exist && armybase.hp>0 && selfball.collisionball(enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
 	{
 		selfball.exist = false;
 		if (!enemyGuardian.exist)
@@ -297,9 +297,9 @@ GLvoid TimerFunction(int value)
 
 	for (int i = 0; i < 6; i++)
 	{
-		if (selfball.exist && armytower[i].hp>0 && collisionball(selfball, armytower[i].x, armytower[i].y, armytower[i].z, 10, 10, 5))
+		if (selfball.exist && armytower[i].hp>0 && selfball.collisionball(armytower[i].x, armytower[i].y, armytower[i].z, 10, 10, 5))
 			selfball.exist = false;
-		if (selfball.exist && enemytower[i].hp>0 && collisionball(selfball, enemytower[i].x, enemytower[i].y, enemytower[i].z, 10, 10, 5))
+		if (selfball.exist && enemytower[i].hp>0 && selfball.collisionball(enemytower[i].x, enemytower[i].y, enemytower[i].z, 10, 10, 5))
 		{
 			selfball.exist = false;
 			enemytower[i].hp-=2;
@@ -310,21 +310,21 @@ GLvoid TimerFunction(int value)
 		enemytower[i].destroytower();
 	}
 
-	if (selfball.exist && armyGuardian.hp > 0 && collisionball(selfball, armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
+	if (selfball.exist && armyGuardian.hp > 0 && selfball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
 		selfball.exist = false;
-	if (selfball.exist && enemyGuardian.hp > 0 && collisionball(selfball, enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
+	if (selfball.exist && enemyGuardian.hp > 0 && selfball.collisionball(enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
 	{
 		selfball.exist = false;
 		enemyGuardian.hp-=2;
 	}
-	destroyguardian(&armyGuardian);
-	destroyguardian(&enemyGuardian);
+	armyGuardian.destroyguardian();
+	enemyGuardian.destroyguardian();
 
 	for (int i = 0; i < 9; i++)
 	{
-		if (selfball.exist && armytank[i].hp>0 && collisionball(selfball, armytank[i].x, armytank[i].y, armytank[i].z, 10, 10, 10))
+		if (selfball.exist && armytank[i].hp>0 && selfball.collisionball(armytank[i].x, armytank[i].y, armytank[i].z, 10, 10, 10))
 			selfball.exist = false;
-		if (selfball.exist && enemytank[i].hp>0 && collisionball(selfball, enemytank[i].x, enemytank[i].y, enemytank[i].z, 10, 10, 10))
+		if (selfball.exist && enemytank[i].hp>0 && selfball.collisionball(enemytank[i].x, enemytank[i].y, enemytank[i].z, 10, 10, 10))
 		{
 			selfball.exist = false;
 			enemytank[i].hp-=2;
@@ -340,8 +340,8 @@ GLvoid TimerFunction(int value)
 		if (enemytank[i].exist)
 			enemytank[i].tankmove(i % 3 + 1, armytank, armytower, &armyGuardian, &armybase);
 	}
-	guardianmove(&armyGuardian);
-	guardianmove(&enemyGuardian);
+	armyGuardian.guardianmove();
+	enemyGuardian.guardianmove();
 
 	glutPostRedisplay();
 	glutTimerFunc(1, TimerFunction, 1);
@@ -390,8 +390,8 @@ GLvoid setup()
 		}
 	}
 
-	createguardian(&armyGuardian, 0);
-	createguardian(&enemyGuardian, 180);
+	armyGuardian.createguardian(0);
+	enemyGuardian.createguardian(180);
 
 	for (int i = 0; i < 3; i++)
 	{

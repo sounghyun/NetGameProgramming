@@ -1,25 +1,23 @@
-#include <GL/glut.h> // includes gl.h glu.h
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
+#ifndef CANNONBALL
+#define CANNONBALL
+
 #include "struct_package.h"
+#include "cannonball.h"
 
-
-bool collisionball(Ball p1, float x, float y, float z, float w, float h, float r)
+bool Ball::collisionball(float x, float y, float z, float w, float h, float r)
 {
-	if (p1.x >= x - w && p1.x <= x + w && p1.z >= z - r && p1.z <= z + r && p1.y >= y - h && p1.y <= y + h)
+	if (this->x >= x - w && this->x <= x + w && this->z >= z - r && this->z <= z + r && this->y >= y - h && this->y <= y + h)
 		return true;
 	return false;
 }
 
-void Cannonball(Ball *cannonball)
+void Ball::ranberCannonball()
 {
 	glPushMatrix();
-	if (cannonball->exist)
+	if (this->exist)
 	{
-		glTranslated(cannonball->x, cannonball->y, cannonball->z);
-		glRotated(cannonball->angle, 0, 1, 0);
+		glTranslated(this->x, this->y, this->z);
+		glRotated(this->angle, 0, 1, 0);
 
 		glTranslated(0, 0, -6);
 
@@ -31,20 +29,22 @@ void Cannonball(Ball *cannonball)
 	glPopMatrix();
 }
 
-void Cannonball_timer(Ball *cannonball, GLfloat trasum)
+void Ball::Cannonball_timer(GLfloat trasum)
 {
-	if (cannonball->exist)
+	if (this->exist)
 	{
-		cannonball->x -= 1 * sin(cannonball->angle * (3.14 / 180));
-		cannonball->z -= 1 * cos(cannonball->angle * (3.14 / 180));
-		cannonball->y -= (0.7 * sin(cannonball->track * (3.14 / 180))) - (1 / 2) * 9.8;
-		if (cannonball->track < 90)
-			cannonball->track += trasum;
-		if (cannonball->y < 0)
+		this->x -= 1 * sin(this->angle * (3.14 / 180));
+		this->z -= 1 * cos(this->angle * (3.14 / 180));
+		this->y -= (0.7 * sin(this->track * (3.14 / 180))) - (1 / 2) * 9.8;
+		if (this->track < 90)
+			this->track += trasum;
+		if (this->y < 0)
 		{
-			cannonball->exist = false;
+			this->exist = false;
 		}
 	}
-	if (cannonball->delaytime > 0)
-		cannonball->delaytime--;
+	if (this->delaytime > 0)
+		this->delaytime--;
 }
+
+#endif // !CANNONBALL
