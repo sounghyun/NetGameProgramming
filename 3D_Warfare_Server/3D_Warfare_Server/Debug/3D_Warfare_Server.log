@@ -1,0 +1,14 @@
+﻿  tower.cpp
+  tank.cpp
+  map.cpp
+  main_game.cpp
+c:\users\seunghyen\onedrive\netgp\netgameprogramming\3d_warfare_server\3d_warfare_server\map.h(7): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: 'fopen' 선언을 참조하십시오.
+c:\users\seunghyen\onedrive\netgp\netgameprogramming\3d_warfare_server\3d_warfare_server\map.h(12): warning C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1193): note: 'fscanf' 선언을 참조하십시오.
+c:\users\seunghyen\onedrive\netgp\netgameprogramming\3d_warfare_server\3d_warfare_server\main_game.cpp(141): warning C4800: 'int': 'true' 또는 'false'로 bool 값을 강제하고 있습니다(성능 경고).
+  guardian.cpp
+  cannonball.cpp
+  basetower.cpp
+  코드를 생성하고 있습니다...
+  3D_Warfare_Server.vcxproj -> C:\Users\SeungHyen\OneDrive\NetGP\NetGameProgramming\3D_Warfare_Server\Debug\3D_Warfare_Server.exe

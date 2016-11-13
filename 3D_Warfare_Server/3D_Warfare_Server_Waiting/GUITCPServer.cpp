@@ -2,62 +2,50 @@
 #include <winsock2.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include <list>
+#include "resource.h"
 
 #define SERVERPORT 9000
 #define BUFSIZE    512
 
-struct FileIndex {
-	char fname[256];
-	byte *index;
-	int len;
+struct Data_Player {
+	SOCKADDR_IN clientaddr;	// 플레이어 접속 정보(ip, 포트번호)
+	int id;				// 플레이어 id
+	bool ready;			// 플레이어 준비상태
 };
 
 // 윈도우 프로시저
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 // 편집 컨트롤 출력 함수
 void DisplayText(char *fmt, ...);
+// 플레이어 리스트 목록 추가 함수
+void DisplayPlayerAdd(char *fmt, ...);
 // 오류 출력 함수
 void err_quit(char *msg);
 void err_display(char *msg);
 // 소켓 통신 스레드 함수
 DWORD WINAPI ServerMain(LPVOID arg);
 DWORD WINAPI ProcessClient(LPVOID arg);
+DWORD WINAPI ProcessTime(LPVOID arg);
 
 HINSTANCE hInst; // 인스턴스 핸들
-HWND hEdit; // 편집 컨트롤
+HWND hEdit1, hList1, hList2; // 편집 컨트롤
 CRITICAL_SECTION cs; // 임계 영역
 
-FileIndex findex;
+Data_Player UserData;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
-{
+{	
 	hInst = hInstance;
 	InitializeCriticalSection(&cs);
 
-	// 윈도우 클래스 등록
-	WNDCLASS wndclass;
-	wndclass.style = CS_HREDRAW | CS_VREDRAW;
-	wndclass.lpfnWndProc = WndProc;
-	wndclass.cbClsExtra = 0;
-	wndclass.cbWndExtra = 0;
-	wndclass.hInstance = hInstance;
-	wndclass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wndclass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = "MyWndClass";
-	if(!RegisterClass(&wndclass)) return 1;
-
-	// 윈도우 생성
-	HWND hWnd = CreateWindow("MyWndClass", "TCP 서버", WS_OVERLAPPEDWINDOW,
-		0, 0, 600, 200, NULL, NULL, hInstance, NULL);
-	if(hWnd == NULL) return 1;
-	ShowWindow(hWnd, nCmdShow);
-	UpdateWindow(hWnd);
-
 	// 소켓 통신 스레드 생성
 	CreateThread(NULL, 0, ServerMain, NULL, 0, NULL);
+
+	// 대화상자 생성
+	DialogBox(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DlgProc);
 
 	// 메시지 루프
 	MSG msg;
@@ -70,28 +58,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	return msg.wParam;
 }
 
-// 윈도우 프로시저
-LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+// 대화상자 프로시저
+BOOL CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch(uMsg){
-	case WM_CREATE:
-		hEdit = CreateWindow("edit", NULL, 
-			WS_CHILD | WS_VISIBLE | WS_HSCROLL | 
-			WS_VSCROLL | ES_AUTOHSCROLL | 
-			ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY,
-			0, 0, 0, 0, hWnd, (HMENU)100, hInst, NULL);
-		return 0;
-	case WM_SIZE:
-		MoveWindow(hEdit, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
-		return 0;
-	case WM_SETFOCUS:
-		SetFocus(hEdit);
-		return 0;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
+	switch (uMsg) {
+	case WM_INITDIALOG:
+		hList1 = GetDlgItem(hDlg, IDC_LIST1);
+		hList2 = GetDlgItem(hDlg, IDC_LIST3);
+		hEdit1 = GetDlgItem(hDlg, IDC_EDIT1);
+		SendMessage(hEdit1, EM_SETLIMITTEXT, BUFSIZE, 0);
+		return TRUE;
+	
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDCANCEL:
+			EndDialog(hDlg, IDCANCEL);
+			return TRUE;
+		}
+		return FALSE;
 	}
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	return FALSE;
+
 }
 
 // 편집 컨트롤 출력 함수
@@ -104,12 +91,17 @@ void DisplayText(char *fmt, ...)
 	vsprintf(cbuf, fmt, arg);
 	
 	EnterCriticalSection(&cs);
-	int nLength = GetWindowTextLength(hEdit);
-	SendMessage(hEdit, EM_SETSEL, nLength, nLength);
-	SendMessage(hEdit, EM_REPLACESEL, FALSE, (LPARAM)cbuf);
+	int nLength = GetWindowTextLength(hEdit1);
+	SendMessage(hEdit1, EM_SETSEL, nLength, nLength);
+	SendMessage(hEdit1, EM_REPLACESEL, FALSE, (LPARAM)cbuf);
 	LeaveCriticalSection(&cs);
 	
 	va_end(arg);
+}
+
+// 플레이어 리스트 목록 추가 함수
+void DisplayPlayerAdd(char *fmt, ...)
+{
 }
 
 // 소켓 함수 오류 출력 후 종료
@@ -190,9 +182,13 @@ DWORD WINAPI ServerMain(LPVOID arg)
 	SOCKET client_sock;
 	SOCKADDR_IN clientaddr;
 	int addrlen;
-	HANDLE hThread;
+	HANDLE hThread, hThreadTime;
+
+	hThreadTime = CreateThread(NULL, 0, ProcessTime,
+		NULL, 0, NULL);
 
 	while(1){
+
 		// accept()
 		addrlen = sizeof(clientaddr);
 		client_sock = accept(listen_sock, (SOCKADDR *)&clientaddr, &addrlen);
@@ -205,11 +201,14 @@ DWORD WINAPI ServerMain(LPVOID arg)
 		DisplayText("\r\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\r\n",
 			inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
+		SendMessage(hList1, LB_ADDSTRING, 0, (LPARAM)inet_ntoa(clientaddr.sin_addr));
+
 		// 스레드 생성
 		hThread = CreateThread(NULL, 0, ProcessClient,
 			(LPVOID)client_sock, 0, NULL);
 		if(hThread == NULL) { closesocket(client_sock); }
 		else { CloseHandle(hThread); }
+
 	}
 
 	// closesocket()
@@ -220,6 +219,35 @@ DWORD WINAPI ServerMain(LPVOID arg)
 	return 0;
 }
 
+DWORD WINAPI ProcessTime(LPVOID arg)
+{
+	//대기 시간 관련 변수
+	time_t startimer, timer, oldTimer = 0;
+
+	time(&startimer);	// 타이머 시작 시간
+
+	if (UserData.ready) {
+		EnterCriticalSection(&cs);
+		while (1)
+		{
+			timer = time(NULL) - startimer;		// 걸린 시간 계산
+
+			if (timer != oldTimer)
+				DisplayText("\r\n 게임 시작까지 %d초가 남았습니다.\r", 10 - timer);
+
+			oldTimer = timer;
+
+			if (timer >= 10) {
+				DisplayText("\r\n 게임이 시작됩니다.\r");
+				Sleep(1000);
+				exit(NULL);
+			}
+		}
+		LeaveCriticalSection(&cs);
+	}
+
+	return 0;
+}
 
 // 클라이언트와 데이터 통신
 DWORD WINAPI ProcessClient(LPVOID arg)
@@ -235,8 +263,15 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	getpeername(client_sock, (SOCKADDR *)&clientaddr, &addrlen);
 
 	while(1){
+		UserData.clientaddr = clientaddr;
+
+		if(UserData.ready)
+			SendMessage(hList2, LB_INSERTSTRING, UserData.id-1, (LPARAM)TEXT("READY"));
+		else
+			SendMessage(hList2, LB_INSERTSTRING, UserData.id - 1, (LPARAM)TEXT(""));
+
 		// 파일 이름 받기
-		retval = recvn(client_sock, (char*)findex.fname, sizeof(char) * 256, 0);
+		retval = recvn(client_sock, (char*)&UserData.id, sizeof(int), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("recv()");
 			break;
@@ -244,36 +279,27 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		else if (retval == 0)
 			break;
 
-		
+
 		// 파일 데이터의 크기정보 받기(고정 길이)
-		retval = recvn(client_sock, (char *)&findex.len, sizeof(int), 0);
+		retval = recvn(client_sock, (char *)&UserData.ready, sizeof(BOOL), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("recv()");
 			break;
 		}
 		else if (retval == 0)
 			break;
-
-		findex.index = (byte*)malloc((findex.len) * sizeof(byte));
-
-		// 파일 데이터 받기(가변 길이)
-		retval = recvn(client_sock, (char*)findex.index, findex.len, 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			break;
-		}
-		else if (retval == 0)
-			break;
-
-		// 받은 데이터 저장
-		f = fopen(findex.fname, "wb");
-		fwrite(findex.index, sizeof(byte), findex.len, f);
-		fclose(f);
 
 		// 받은 데이터 출력
-		DisplayText("[TCP/%s:%d] %s의 파일을 받았습니다.\n", inet_ntoa(clientaddr.sin_addr),
-			ntohs(clientaddr.sin_port), findex.fname);
+		if (UserData.ready) {
+			DisplayText("[TCP/%s:%d] %d 플레이어의 준비상태는 True 입니다.\n", inet_ntoa(clientaddr.sin_addr),
+				ntohs(clientaddr.sin_port), UserData.id, UserData.ready);
+		}
+		else {
+			DisplayText("[TCP/%s:%d] %d 플레이어의 준비상태는 False 입니다.\n", inet_ntoa(clientaddr.sin_addr),
+				ntohs(clientaddr.sin_port), UserData.id, UserData.ready);
+		}
 
+		SendMessage(hList2, LB_DELETESTRING, UserData.id-1, 0);
 	}
 
 	// closesocket()
