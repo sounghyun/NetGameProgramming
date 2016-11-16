@@ -6,33 +6,9 @@
 #include "basetower.h"
 #include "guardian.h"
 
-void Tank::createtank(float angle, int way)
-{
-	this->hp = 5;
-	this->Sangle = angle;
-	this->angle = 90 * (way - 1) + angle;
-	if (this->Sangle)
-		this->z = -450;
-	else
-		this->z = -50;
-	this->x = 100;
-	this->y = 0;
-	this->h = 10;
-	this->w = 10;
-	this->r = 10;
-	this->exist = true;
-	this->delaytime = 1500;
-	if (way == 1)
-		this->time = 2000;
-	else
-		this->time = 2730;
-}
-
 void Tank::ranbertank(bool body)
 {
 	glPushMatrix(); // ÅÊÅ©
-	if (!body)
-		glTranslated(0, this->quake, 0);
 
 	glTranslated(this->x, this->y, this->z + 1);
 	glRotated(this->angle, 0, 1, 0);

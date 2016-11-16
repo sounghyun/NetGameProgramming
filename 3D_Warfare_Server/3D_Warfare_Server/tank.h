@@ -17,7 +17,7 @@ public:
 	int angle, Sangle;
 	int time;
 	int delaytime;
-	int quake;
+	int wave;
 	bool exist;
 	Ball cannonball;
 
@@ -30,22 +30,42 @@ public:
 								 w(10),
 								 r(10),
 								 exist(true),
+								 wave(way+1),
 								 delaytime(1500)
 	{
 		if (this->Sangle)
 			this->z = -450;
 		else
 			this->z = -50;
-		if (way == 1)
+		if (wave == 2)
 			this->time = 2000;
 		else
 			this->time = 2730; };
 
-	void ranbertank(bool body);
-
-	void tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
+	void tankmove(list<Tank>& tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
 
 	void destroytank();
+};
+
+
+struct Tank_data
+{
+	int hp;
+	float x, y, z;
+	int angle, Sangle;
+	int wave;
+
+	Tank_data& operator=(const Tank& ref){
+		this->hp = ref.hp;
+		this->x = ref.x;
+		this->y = ref.y;
+		this->z = ref.z;
+		this->angle = ref.angle;
+		this->Sangle = ref.Sangle;
+		this->wave = ref.wave;
+
+		return *this;
+	}
 };
 
 #endif // !TANK_H

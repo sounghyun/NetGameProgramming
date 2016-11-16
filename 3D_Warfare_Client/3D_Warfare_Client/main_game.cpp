@@ -1,10 +1,5 @@
 #pragma comment(lib, "ws2_32")
-#include <winsock2.h>
-#include <GL/glut.h> // includes gl.h glu.h
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
+
 #include "struct_package.h"
 #include "map.h"
 #include "cannonball.h"
@@ -14,7 +9,7 @@
 #include "guardian.h"
 
 #define SERVERIP   "127.0.0.1"
-#define SERVERPORT 9000
+#define SERVERPORT 8900
 
 // 오류 출력 함수
 void err_quit(char *msg);
@@ -33,21 +28,24 @@ GLvoid SpecialKeyborad(int key, int x, int y);		// 특수키 입력
 GLvoid SpecialUPKeyborad(int key, int x, int y);	// 특수키 입력(키업)
 GLvoid TimerFunction(int value);					// 타이머
 GLvoid setup();										// 첫 설정
-bool collision(Point p1, Tank p2);					// 플레이어, 맵 충돌체크
-bool quakecollision(Tank p1, float x, float z, float w, float r);	// 플레이어 지진 충돌체크
+template<class Object>
+bool collision(Point p1, Object p2);				// 객체, 맵 충돌 체크
 
+void Guardianrecv();
+void Tankrecv();
 
 SOCKET sock; // 소켓
 HANDLE hReadEvent, hWriteEvent; // 이벤트
 
 bool viewmode = false;	// 뷰 전환 (1인칭시점, 전체뷰)
 GLint Ttime = 0;		// 총 시간
-Point quake[5];			// 지진
 Basetower armybase, enemybase;	// 아군본부, 적군본부
 Guardian_Data* GuardianBuf;
 Guardian armyGuardian, enemyGuardian;	// 아군가디언, 적군가디언
 Tower armytower[6], enemytower[6];
-Tank self, armytank[9], enemytank[9];
+Player self(0);
+Tank_data* TankBuf;
+list<Tank> armytank, enemytank;
 GLint LRcontral, UDcontral;
 Ball selfball;
 
@@ -164,57 +162,142 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	while (1) {
 		WaitForSingleObject(hWriteEvent, INFINITE); // 쓰기 완료 기다리기
 
-		char* buf[sizeof(Guardian_Data)];
+		Tankrecv();
+		Guardianrecv();
 
-		// 아군 가디언
-		retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			break;
-		}
-		else if (retval == 0)
-			break;
+		system("cls");
 
-		GuardianBuf = (Guardian_Data*)&buf;
-
-		armyGuardian = *GuardianBuf;
-
-		printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n", 
-			armyGuardian.hp, armyGuardian.x, armyGuardian.y, armyGuardian.z, armyGuardian.angle, armyGuardian.Rangle, armyGuardian.Langle);
-
-		// 아군 가디언 수신 완료 메세지 보내기
-		retval = send(sock, (char*)TEXT("아군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
-		}
-
-		// 적군 가디언
-		retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			break;
-		}
-		else if (retval == 0)
-			break;
-
-		GuardianBuf = (Guardian_Data*)&buf;
-
-		enemyGuardian = *GuardianBuf;
-
-		printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n",
-			enemyGuardian.hp, enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, enemyGuardian.angle, enemyGuardian.Rangle, enemyGuardian.Langle);
-
-		// 적군 가디언 수신 완료 메세지 보내기
-		retval = send(sock, (char*)TEXT("적군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
-		}
 		SetEvent(hReadEvent); // 읽기 완료 알리기
 	}
 
 	return 0;
 }
 
+void Tankrecv()
+{
+	int retval, num;
+	char* buf[sizeof(Tank_data)];
+
+	// 아군 탱크
+	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 아군 탱크 수 받아오기
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	armytank.clear(); // 과거 시점의 아군 탱크 정보 초기화
+
+	for (int i = 0; i < num; i++) {		// 현재 출현중인 아군 탱크 수 만큼 불러오기
+		retval = recv(sock, (char*)buf, sizeof(Tank_data), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			return;
+		}
+		else if (retval == 0)
+			return;
+
+		TankBuf = (Tank_data*)&buf;
+
+		Tank temp(TankBuf);
+		armytank.push_back(temp);
+
+//		printf("[TCP 클라이언트] 아군 탱크 정보 armytank의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, wave : %d \n",
+//			temp.hp, temp.x, temp.y, temp.z, temp.angle, temp.wave);
+	}
+
+	// 아군 탱크 수신 완료 메세지 보내기
+	retval = send(sock, (char*)TEXT("1개의 아군 탱크 수신 완료\n"), sizeof(char) * 28, 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+
+
+	// 적군 탱크
+	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 적군 탱크 수 받아오기
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	enemytank.clear(); // 과거 시점의 적군 탱크 정보 초기화
+
+	for (int i = 0; i < num; i++) {		// 현재 출현중인 적군 탱크 수 만큼 불러오기
+		retval = recv(sock, (char*)buf, sizeof(Tank_data), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			return;
+		}
+		else if (retval == 0)
+			return;
+
+		TankBuf = (Tank_data*)&buf;
+
+		Tank temp2(TankBuf);
+		enemytank.push_back(temp2);
+
+//		printf("[TCP 클라이언트] 적군 탱크 정보 armytank의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d wave : %d \n",
+//			temp2.hp, temp2.x, temp2.y, temp2.z, temp2.angle, temp2.wave);
+	}
+	// 적군 탱크 수신 완료 메세지 보내기
+	retval = send(sock, (char*)TEXT("1개의 적군 탱크 수신 완료\n"), sizeof(char) * 28, 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+}
+
+void Guardianrecv()
+{
+	int retval;
+	char* buf[sizeof(Guardian_Data)];
+
+	// 아군 가디언
+	retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	GuardianBuf = (Guardian_Data*)&buf;
+
+	armyGuardian = *GuardianBuf;
+
+	printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n",
+		armyGuardian.hp, armyGuardian.x, armyGuardian.y, armyGuardian.z, armyGuardian.angle, armyGuardian.Rangle, armyGuardian.Langle);
+
+	// 아군 가디언 수신 완료 메세지 보내기
+	retval = send(sock, (char*)TEXT("아군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+
+	// 적군 가디언
+	retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	GuardianBuf = (Guardian_Data*)&buf;
+
+	enemyGuardian = *GuardianBuf;
+
+	printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n",
+		enemyGuardian.hp, enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, enemyGuardian.angle, enemyGuardian.Rangle, enemyGuardian.Langle);
+
+	// 적군 가디언 수신 완료 메세지 보내기
+	retval = send(sock, (char*)TEXT("적군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+}
 // 윈도우 출력 함수s
 GLvoid drawScene(GLvoid)
 {
@@ -232,7 +315,7 @@ GLvoid drawScene(GLvoid)
 	else
 	{
 		glRotated(-self.angle, 0, 1, 0);
-		glTranslated(-self.x, -self.y - self.quake, -self.z);
+		glTranslated(-self.x, -self.y, -self.z);
 		gluLookAt(0, 0, 1, 0, 0, 0, 0, 1, 0);
 	}
 
@@ -263,18 +346,21 @@ GLvoid drawScene(GLvoid)
 	glPopMatrix();
 
 	glPushMatrix();
-	for (int i = 0; i < 9; i++)
+	for (auto d : armytank)
 	{
-		if (armytank[i].exist)
+		if (d.exist)
 		{
-			armytank[i].ranbertank(true);
-			armytank[i].cannonball.ranberCannonball();
+			d.ranbertank(true);
+			d.cannonball.ranberCannonball();
 		}
+	}
 
-		if (enemytank[i].exist)
+	for (auto d : enemytank)
+	{
+		if (d.exist)
 		{
-			enemytank[i].ranbertank(true);
-			enemytank[i].cannonball.ranberCannonball();
+			d.ranbertank(true);
+			d.cannonball.ranberCannonball();
 		}
 	}
 
@@ -347,37 +433,6 @@ GLvoid SpecialUPKeyborad(int key, int x, int y)
 }
 GLvoid TimerFunction(int value)
 {
-	Ttime++;
-	if (Ttime > 800)
-	{
-		for (int i = 0; i < 6; i++)
-		{
-			if (!armytank[i].exist)
-				armytank[i].createtank(0, i % 3);
-			if (!enemytank[i].exist)
-				enemytank[i].createtank(180, i % 3);
-		}
-	}
-	if (Ttime > 1600)
-	{
-		for (int i = 0; i < 9; i++)
-		{
-			if (!armytank[i].exist)
-				armytank[i].createtank(0, i % 3);
-			if (!enemytank[i].exist)
-				enemytank[i].createtank(180, i % 3);
-		}
-	}
-	else
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			if (!armytank[i].exist)
-				armytank[i].createtank(0, i % 3);
-			if (!enemytank[i].exist)
-				enemytank[i].createtank(180, i % 3);
-		}
-	}
 	if (UDcontral == 1)
 	{
 		self.x -= 0.5*sin(self.angle * (3.14 / 180));
@@ -421,22 +476,6 @@ GLvoid TimerFunction(int value)
 	if (LRcontral == 2)
 		self.angle -= 1;
 
-	if (UDcontral)
-	{
-		int i;
-		for ( i = 0; i < 5; i++)
-		{
-			if (quakecollision(self, quake[i].x, quake[i].z, 10, 10))
-			{
-				self.quake = (self.quake + 1) % 5;
-				break;
-			}
-		}
-		if (i == 5)
-			self.quake = 0;
-
-	}
-
 	if (self.y > 5)
 		self.y-=10;
 	for (int y = 0; y < 3; y++)
@@ -465,40 +504,12 @@ GLvoid TimerFunction(int value)
 	armybase.destroytower();
 	enemybase.destroytower();
 
-	for (int i = 0; i < 6; i++)
-	{
-		if (selfball.exist && armytower[i].hp>0 && selfball.collisionball(armytower[i].x, armytower[i].y, armytower[i].z, 10, 10, 5))
-			selfball.exist = false;
-		if (selfball.exist && enemytower[i].hp>0 && selfball.collisionball(enemytower[i].x, enemytower[i].y, enemytower[i].z, 10, 10, 5))
-		{
-			selfball.exist = false;
-			enemytower[i].hp-=2;
-		}
-		armytower[i].towerattck(enemytank);
-		enemytower[i].towerattck(armytank);
-		armytower[i].destroytower();
-		enemytower[i].destroytower();
-	}
-
 	armyGuardian.destroyguardian();
 	enemyGuardian.destroyguardian();
 
-	for (int i = 0; i < 9; i++)
-	{
-		if (selfball.exist && armytank[i].hp>0 && selfball.collisionball(armytank[i].x, armytank[i].y, armytank[i].z, 10, 10, 10))
-			selfball.exist = false;
-		if (selfball.exist && enemytank[i].hp>0 && selfball.collisionball(enemytank[i].x, enemytank[i].y, enemytank[i].z, 10, 10, 10))
-		{
-			selfball.exist = false;
-			enemytank[i].hp-=2;
-		}
-		armytank[i].destroytank();
-		enemytank[i].destroytank();
-	}
-
 
 	glutPostRedisplay();
-	glutTimerFunc(1, TimerFunction, 1);
+	glutTimerFunc(1, TimerFunction, 10);
 }
 
 GLvoid setup()
@@ -512,12 +523,6 @@ GLvoid setup()
 
 	armybase.setup(20, 100, -20, 180, true);
 	enemybase.setup(20, 100, -480, 0, true);
-
-	quake[0].x = 60;	quake[0].z = -120;
-	quake[1].x = 140;	quake[1].z = -120;
-	quake[2].x = 60;	quake[2].z = -380;
-	quake[3].x = 140;	quake[3].z = -380;
-	quake[4].x = 100;	quake[4].z = -250;
 
 	int armycount = 0, enemycount = 0;
 	for (int x = 0; x < 20; x++)
@@ -543,27 +548,12 @@ GLvoid setup()
 			}
 		}
 	}
-
-	armyGuardian.createguardian(0);
-	enemyGuardian.createguardian(180);
-
-	for (int i = 0; i < 3; i++)
-	{
-		armytank[i].createtank(0, i);
-		enemytank[i].createtank(180, i);
-	}
 }
 
-bool collision(Point p1, Tank p2)
+template<class Object>
+bool collision(Point p1, Object p2)
 {
 	if (p2.x + 3 >= p1.x - 5 && p2.x - 3 <= p1.x + 5 && p2.z + 3 >= p1.z - 5 && p2.z - 3 <= p1.z + 5 && p2.y >= p1.y -5 && p2.y <= p1.y + 5)
-		return true;
-	return false;
-}
-
-bool quakecollision(Tank p1, float x, float z, float w, float r)
-{
-	if (p1.x + 3 >= x - w && p1.x - 3 <= x + w && p1.z + 3 >= z - r && p1.z - 3 <= z + r)
 		return true;
 	return false;
 }

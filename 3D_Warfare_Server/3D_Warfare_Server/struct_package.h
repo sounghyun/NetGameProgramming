@@ -18,4 +18,19 @@ struct Point
 	GLint state;
 };
 
+class Player
+{
+public:
+	int hp;
+	float x, y, z;
+	int angle;
+
+	Player(int angle) : 
+		x(100),
+		y(5),
+		z(-35),
+		angle(angle)
+	{}
+};
+
 #endif

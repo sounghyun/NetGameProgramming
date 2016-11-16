@@ -22,6 +22,7 @@ void Guardian::guardianmove()
 {
 	if (this->hp > 0)
 	{
+		this->angle %= 360;
 		if (this->time % 500 == 0)
 		{
 			this->angle += 5;

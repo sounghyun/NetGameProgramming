@@ -8,6 +8,14 @@ class Tower;
 class Basetower;
 class Guardian;
 
+struct Tank_data
+{
+	int hp;
+	float x, y, z;
+	int angle, Sangle;
+	int wave;
+};
+
 class Tank
 {
 public:
@@ -17,14 +25,28 @@ public:
 	int angle, Sangle;
 	int time;
 	int delaytime;
-	int quake;
+	int wave;
 	bool exist;
 	Ball cannonball;
 
-	Tank() {};
-
-	void createtank(float angle, int way);
-
+	Tank(Tank_data* ref) : hp(5),
+		Sangle(ref->Sangle),
+		angle(ref->angle),
+		x(ref->x),
+		y(ref->y),
+		z(ref->z),
+		h(10),
+		w(10),
+		r(10),
+		exist(true),
+		wave(ref->wave),
+		delaytime(1500)
+	{
+		if (wave == 2)
+			this->time = 2000;
+		else
+			this->time = 2730;
+	};
 	void ranbertank(bool body);
 
 	void destroytank();
