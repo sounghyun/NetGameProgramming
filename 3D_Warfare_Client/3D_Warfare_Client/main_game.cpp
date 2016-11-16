@@ -1,3 +1,5 @@
+#pragma comment(lib, "ws2_32")
+#include <winsock2.h>
 #include <GL/glut.h> // includes gl.h glu.h
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,21 +13,39 @@
 #include "basetower.h"
 #include "guardian.h"
 
-GLvoid drawScene(GLvoid);
-GLvoid Reshape(int w, int h);
-GLvoid Keyborad(unsigned char key, int x, int y);
-GLvoid SpecialKeyborad(int key, int x, int y);
-GLvoid SpecialUPKeyborad(int key, int x, int y);
-GLvoid TimerFunction(int value);
-GLvoid setup();
-bool collision(Point p1, Tank p2);
-bool quakecollision(Tank p1, float x, float z, float w, float r);
+#define SERVERIP   "127.0.0.1"
+#define SERVERPORT 9000
 
-bool viewmode = false;
-GLint Ttime = 0;
-Point quake[5];
-Basetower armybase, enemybase;
-Guardian armyGuardian, enemyGuardian;
+// 오류 출력 함수
+void err_quit(char *msg);
+void err_display(char *msg);
+
+// 사용자 정의 데이터 수신 함수
+int recvn(SOCKET s, char *buf, int len, int flags);
+
+// 소켓 통신 스레드 함수
+DWORD WINAPI ClientMain(LPVOID arg);
+
+GLvoid drawScene(GLvoid);							// 그리기
+GLvoid Reshape(int w, int h);						// 화면 설정
+GLvoid Keyborad(unsigned char key, int x, int y);	// 일반 키보드 입력
+GLvoid SpecialKeyborad(int key, int x, int y);		// 특수키 입력
+GLvoid SpecialUPKeyborad(int key, int x, int y);	// 특수키 입력(키업)
+GLvoid TimerFunction(int value);					// 타이머
+GLvoid setup();										// 첫 설정
+bool collision(Point p1, Tank p2);					// 플레이어, 맵 충돌체크
+bool quakecollision(Tank p1, float x, float z, float w, float r);	// 플레이어 지진 충돌체크
+
+
+SOCKET sock; // 소켓
+HANDLE hReadEvent, hWriteEvent; // 이벤트
+
+bool viewmode = false;	// 뷰 전환 (1인칭시점, 전체뷰)
+GLint Ttime = 0;		// 총 시간
+Point quake[5];			// 지진
+Basetower armybase, enemybase;	// 아군본부, 적군본부
+Guardian_Data* GuardianBuf;
+Guardian armyGuardian, enemyGuardian;	// 아군가디언, 적군가디언
 Tower armytower[6], enemytower[6];
 Tank self, armytank[9], enemytank[9];
 GLint LRcontral, UDcontral;
@@ -35,6 +55,16 @@ void main(int argc, char *argv[])
 {
 	setup();
 	srand((unsigned int)time(NULL));
+
+	// 이벤트 생성
+	hReadEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	if (hReadEvent == NULL) return ;
+	hWriteEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (hWriteEvent == NULL) return ;
+
+	// 소켓 통신 스레드 생성
+	CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
+
 	//초기화 함수들
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // 디스플레이 모드 설정
 	glutInitWindowPosition(100, 100); // 윈도우의 위치지정
@@ -47,10 +77,148 @@ void main(int argc, char *argv[])
 	glutDisplayFunc(drawScene); // 출력 함수의 지정
 	glutReshapeFunc(Reshape); // 다시 그리기 함수의 지정
 	glutMainLoop();
+
+	// 이벤트 제거
+	CloseHandle(hReadEvent);
+	CloseHandle(hWriteEvent);
+
+	// closesocket()
+	closesocket(sock);
+
+	// 윈속 종료
+	WSACleanup();
+	return ;
 }
+
+// 소켓 함수 오류 출력 후 종료
+void err_quit(char *msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, msg, MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+	exit(1);
+}
+
+// 소켓 함수 오류 출력
+void err_display(char *msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	printf("[%s] %s", msg, (char *)lpMsgBuf);
+	LocalFree(lpMsgBuf);
+}
+
+// 사용자 정의 데이터 수신 함수
+int recvn(SOCKET s, char *buf, int len, int flags)
+{
+	int received;
+	char *ptr = buf;
+	int left = len;
+
+	while (left > 0) {
+		received = recv(s, ptr, left, flags);
+		if (received == SOCKET_ERROR)
+			return SOCKET_ERROR;
+		else if (received == 0)
+			break;
+		left -= received;
+		ptr += received;
+	}
+
+	return (len - left);
+}
+
+// TCP 클라이언트 시작 부분
+DWORD WINAPI ClientMain(LPVOID arg)
+{
+	int retval;
+
+	// 윈속 초기화
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		return 1;
+
+	// socket()
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET) err_quit("socket()");
+
+	// connect()
+	SOCKADDR_IN serveraddr;
+	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	serveraddr.sin_port = htons(SERVERPORT);
+	retval = connect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
+	if (retval == SOCKET_ERROR) err_quit("connect()");
+
+	// 서버와 데이터 통신
+	while (1) {
+		WaitForSingleObject(hWriteEvent, INFINITE); // 쓰기 완료 기다리기
+
+		char* buf[sizeof(Guardian_Data)];
+
+		// 아군 가디언
+		retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			break;
+		}
+		else if (retval == 0)
+			break;
+
+		GuardianBuf = (Guardian_Data*)&buf;
+
+		armyGuardian = *GuardianBuf;
+
+		printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n", 
+			armyGuardian.hp, armyGuardian.x, armyGuardian.y, armyGuardian.z, armyGuardian.angle, armyGuardian.Rangle, armyGuardian.Langle);
+
+		// 아군 가디언 수신 완료 메세지 보내기
+		retval = send(sock, (char*)TEXT("아군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("send()");
+		}
+
+		// 적군 가디언
+		retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			break;
+		}
+		else if (retval == 0)
+			break;
+
+		GuardianBuf = (Guardian_Data*)&buf;
+
+		enemyGuardian = *GuardianBuf;
+
+		printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n",
+			enemyGuardian.hp, enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, enemyGuardian.angle, enemyGuardian.Rangle, enemyGuardian.Langle);
+
+		// 적군 가디언 수신 완료 메세지 보내기
+		retval = send(sock, (char*)TEXT("적군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("send()");
+		}
+		SetEvent(hReadEvent); // 읽기 완료 알리기
+	}
+
+	return 0;
+}
+
 // 윈도우 출력 함수s
 GLvoid drawScene(GLvoid)
 {
+	WaitForSingleObject(hReadEvent, INFINITE); // 쓰기 완료 기다리기
 	glClearColor(0, 0, 0, 1.0f); // 바탕은 흰색으로
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 설정된 색으로 전체를 칠하기
 
@@ -116,6 +284,8 @@ GLvoid drawScene(GLvoid)
 
 	glDisable(GL_DEPTH_TEST);
 	glutSwapBuffers(); // 화면에 출력하기
+
+	SetEvent(hWriteEvent); // 읽기 완료 알리기
 }
 GLvoid Reshape(int w, int h)
 {
@@ -310,13 +480,6 @@ GLvoid TimerFunction(int value)
 		enemytower[i].destroytower();
 	}
 
-	if (selfball.exist && armyGuardian.hp > 0 && selfball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
-		selfball.exist = false;
-	if (selfball.exist && enemyGuardian.hp > 0 && selfball.collisionball(enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
-	{
-		selfball.exist = false;
-		enemyGuardian.hp-=2;
-	}
 	armyGuardian.destroyguardian();
 	enemyGuardian.destroyguardian();
 
@@ -333,15 +496,6 @@ GLvoid TimerFunction(int value)
 		enemytank[i].destroytank();
 	}
 
-	for (int i = 0; i < 9; i++)
-	{
-		if (armytank[i].exist)
-			armytank[i].tankmove(i % 3 + 1, enemytank, enemytower, &enemyGuardian, &enemybase);
-		if (enemytank[i].exist)
-			enemytank[i].tankmove(i % 3 + 1, armytank, armytower, &armyGuardian, &armybase);
-	}
-	armyGuardian.guardianmove();
-	enemyGuardian.guardianmove();
 
 	glutPostRedisplay();
 	glutTimerFunc(1, TimerFunction, 1);

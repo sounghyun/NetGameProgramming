@@ -29,7 +29,7 @@ public:
 
 	void ranbertower();
 
-	void towerattck(Tank *tankobject);
+	void towerattck(list<Tank>& tankobject);
 
 	void destroytower();
 };

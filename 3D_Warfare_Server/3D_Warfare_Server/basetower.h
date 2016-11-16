@@ -27,9 +27,9 @@ public:
 	int GetAngle() { return angle; };
 	int GetExist() { return exist; };
 
-	void ranberbasetower();
 
-	void towerattck(Tank *tankobject);
+
+	void towerattck(list<Tank>& tankobject);
 
 	void destroytower();
 };

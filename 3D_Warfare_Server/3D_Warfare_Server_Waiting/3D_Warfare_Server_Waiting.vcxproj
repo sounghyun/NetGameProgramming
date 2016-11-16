@@ -142,7 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="GUITCPServer.cpp" />
+    <ClCompile Include="3D_Warfare_Server_Waiting.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />

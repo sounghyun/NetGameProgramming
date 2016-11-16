@@ -21,7 +21,7 @@ void Guardian::createguardian(float angle)
 void Guardian::ranberguardian()
 {
 	glPushMatrix();
-	if (this->Rangle < 0)
+	if (&this->Rangle < 0)
 		glTranslated(this->x, this->y + this->Rangle * 0.02, this->z);
 	else
 		glTranslated(this->x, this->y + this->Langle * 0.02, this->z);

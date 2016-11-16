@@ -156,7 +156,7 @@ void Tower::towerattck(Tank *tankobject)
 	}
 	else
 	{
-		this->cannonball.Cannonball_timer(4);
+		this->cannonball.Cannonball_timer(2);
 
 		for (int i = 0; i < 9; i++)
 		{

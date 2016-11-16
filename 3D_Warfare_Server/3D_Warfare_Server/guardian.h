@@ -16,9 +16,31 @@ public:
 	bool exist;
 
 	void createguardian(float angle);
-	void ranberguardian();
 	void guardianmove();
 	void destroyguardian();
+};
+
+
+struct Guardian_Data
+{
+	int hp;
+	float x, y, z;
+	int angle;
+	float Rangle, Langle;
+	bool RLck;
+
+	Guardian_Data& operator=(const Guardian& ref) {
+		this->hp = ref.hp;
+		this->x = ref.x;
+		this->y = ref.y;
+		this->z = ref.z;
+		this->angle = ref.angle;
+		this->Rangle = ref.Rangle;
+		this->Langle = ref.Langle;
+		this->RLck = ref.RLck;
+
+		return *this;
+	}
 };
 
 #endif // !GUARDIAN_H

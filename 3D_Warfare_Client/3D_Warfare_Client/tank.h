@@ -27,8 +27,6 @@ public:
 
 	void ranbertank(bool body);
 
-	virtual void tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
-
 	void destroytank();
 };
 

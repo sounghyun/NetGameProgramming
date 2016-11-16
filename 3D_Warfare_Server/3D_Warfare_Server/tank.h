@@ -21,13 +21,29 @@ public:
 	bool exist;
 	Ball cannonball;
 
-	Tank() {};
-
-	void createtank(float angle, int way);
+	Tank(float angle, int way) : hp(5), 
+								 Sangle(angle),
+								 angle(90 * (way - 1) + angle),
+								 x(100),
+								 y(0),
+								 h(10),
+								 w(10),
+								 r(10),
+								 exist(true),
+								 delaytime(1500)
+	{
+		if (this->Sangle)
+			this->z = -450;
+		else
+			this->z = -50;
+		if (way == 1)
+			this->time = 2000;
+		else
+			this->time = 2730; };
 
 	void ranbertank(bool body);
 
-	virtual void tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
+	void tankmove(int way, Tank *tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
 
 	void destroytank();
 };

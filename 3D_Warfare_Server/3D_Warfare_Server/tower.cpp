@@ -139,7 +139,7 @@ void Tower::ranbertower()
 	glPopMatrix();
 }
 
-void Tower::towerattck(Tank *tankobject)
+void Tower::towerattck(list<Tank>& tankobject)
 {
 	if (this->cannonball.exist == false && this->cannonball.delaytime == 0 && this->hp > 0)
 	{
@@ -158,14 +158,14 @@ void Tower::towerattck(Tank *tankobject)
 	{
 		this->cannonball.Cannonball_timer(4);
 
-		for (int i = 0; i < 9; i++)
+		for (auto d : tankobject)
 		{
-			if (this->cannonball.exist && tankobject[i].hp>0 && this->cannonball.collisionball(tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
+			if (this->cannonball.exist && d.hp>0 && this->cannonball.collisionball(d.x, d.y, d.z, 10, 10, 10))
 			{
 				this->cannonball.exist = false;
-				tankobject[i].hp -= 2;
+				d.hp -= 2;
 			}
-			tankobject[i].destroytank();
+			d.destroytank();
 		}
 	}
 }
