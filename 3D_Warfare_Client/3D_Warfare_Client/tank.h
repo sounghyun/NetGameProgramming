@@ -14,6 +14,7 @@ struct Tank_data
 	float x, y, z;
 	int angle, Sangle;
 	int wave;
+	Ball_data cannonball;
 };
 
 class Tank
@@ -42,6 +43,7 @@ public:
 		wave(ref->wave),
 		delaytime(1500)
 	{
+		this->cannonball = ref->cannonball;
 		if (wave == 2)
 			this->time = 2000;
 		else

@@ -31,7 +31,8 @@ public:
 								 r(10),
 								 exist(true),
 								 wave(way+1),
-								 delaytime(1500)
+								 delaytime(1500),
+								 cannonball()
 	{
 		if (this->Sangle)
 			this->z = -450;
@@ -54,6 +55,7 @@ struct Tank_data
 	float x, y, z;
 	int angle, Sangle;
 	int wave;
+	Ball_data cannonball;
 
 	Tank_data& operator=(const Tank& ref){
 		this->hp = ref.hp;
@@ -63,6 +65,7 @@ struct Tank_data
 		this->angle = ref.angle;
 		this->Sangle = ref.Sangle;
 		this->wave = ref.wave;
+		this->cannonball = ref.cannonball;
 
 		return *this;
 	}

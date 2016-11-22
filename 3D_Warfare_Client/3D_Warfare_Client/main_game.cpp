@@ -9,7 +9,7 @@
 #include "guardian.h"
 
 #define SERVERIP   "127.0.0.1"
-#define SERVERPORT 8900
+#define SERVERPORT 9000
 
 // 오류 출력 함수
 void err_quit(char *msg);
@@ -33,6 +33,8 @@ bool collision(Point p1, Object p2);				// 객체, 맵 충돌 체크
 
 void Guardianrecv();
 void Tankrecv();
+void Client_Players_send();
+void Client_Players_recv();
 
 SOCKET sock; // 소켓
 HANDLE hReadEvent, hWriteEvent; // 이벤트
@@ -46,8 +48,11 @@ Tower armytower[6], enemytower[6];
 Player self(0);
 Tank_data* TankBuf;
 list<Tank> armytank, enemytank;
+list<Tank>* armytank_buf, enemytank_buf;
+Ball_data* ballbuf;
 GLint LRcontral, UDcontral;
 Ball selfball;
+int playernumber;
 
 void main(int argc, char *argv[])
 {
@@ -158,12 +163,32 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	retval = connect(sock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
 	if (retval == SOCKET_ERROR) err_quit("connect()");
 
+	retval = recv(sock, (char*)&playernumber, sizeof(int), 0);//플레이어 번호 받기
+	printf("플레이어 번호 : %d\n", playernumber);
+
+	self.y = 5;
+	self.x = 100;
+
+	if (playernumber % 2 == 1)
+	{
+		self.z = -465;
+		self.angle = 180;
+	}
+	else
+	{
+		self.z = -35;
+		self.angle = 0;
+	}
+
 	// 서버와 데이터 통신
 	while (1) {
 		WaitForSingleObject(hWriteEvent, INFINITE); // 쓰기 완료 기다리기
+		Client_Players_send();
 
 		Tankrecv();
 		Guardianrecv();
+
+		Client_Players_recv();
 
 		system("cls");
 
@@ -173,10 +198,22 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	return 0;
 }
 
+void Client_Players_send()
+{
+
+}
+
+void Client_Players_recv()
+{
+
+}
+
 void Tankrecv()
 {
 	int retval, num;
-	char* buf[sizeof(Tank_data)];
+	char* Tankdatabuf;
+	char* buf2[sizeof(Ball_data)];
+	Tank_data* tempTankdata;
 
 	// 아군 탱크
 	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 아군 탱크 수 받아오기
@@ -189,30 +226,19 @@ void Tankrecv()
 
 	armytank.clear(); // 과거 시점의 아군 탱크 정보 초기화
 
-	for (int i = 0; i < num; i++) {		// 현재 출현중인 아군 탱크 수 만큼 불러오기
-		retval = recv(sock, (char*)buf, sizeof(Tank_data), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			return;
-		}
-		else if (retval == 0)
-			return;
-
-		TankBuf = (Tank_data*)&buf;
-
-		Tank temp(TankBuf);
-		armytank.push_back(temp);
-
-//		printf("[TCP 클라이언트] 아군 탱크 정보 armytank의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, wave : %d \n",
-//			temp.hp, temp.x, temp.y, temp.z, temp.angle, temp.wave);
-	}
-
-	// 아군 탱크 수신 완료 메세지 보내기
-	retval = send(sock, (char*)TEXT("1개의 아군 탱크 수신 완료\n"), sizeof(char) * 28, 0);
+	Tankdatabuf = new char[sizeof(Tank_data) * num];
+	retval = recv(sock, (char*)Tankdatabuf, sizeof(Tank_data) * num, 0);		// 현재 출현중인 아군 탱크 수 받아오기
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		err_display("recv()");
+		return;
 	}
+	else if (retval == 0)
+		return;
 
+
+	tempTankdata = (Tank_data*)Tankdatabuf;
+	for (int i = 0; i < num; i++)
+		armytank.push_back(&tempTankdata[i]);
 
 	// 적군 탱크
 	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 적군 탱크 수 받아오기
@@ -225,28 +251,19 @@ void Tankrecv()
 
 	enemytank.clear(); // 과거 시점의 적군 탱크 정보 초기화
 
-	for (int i = 0; i < num; i++) {		// 현재 출현중인 적군 탱크 수 만큼 불러오기
-		retval = recv(sock, (char*)buf, sizeof(Tank_data), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-			return;
-		}
-		else if (retval == 0)
-			return;
-
-		TankBuf = (Tank_data*)&buf;
-
-		Tank temp2(TankBuf);
-		enemytank.push_back(temp2);
-
-//		printf("[TCP 클라이언트] 적군 탱크 정보 armytank의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d wave : %d \n",
-//			temp2.hp, temp2.x, temp2.y, temp2.z, temp2.angle, temp2.wave);
-	}
-	// 적군 탱크 수신 완료 메세지 보내기
-	retval = send(sock, (char*)TEXT("1개의 적군 탱크 수신 완료\n"), sizeof(char) * 28, 0);
+	Tankdatabuf = new char[sizeof(Tank_data) * num];
+	retval = recv(sock, (char*)Tankdatabuf, sizeof(Tank_data) * num, 0);		// 현재 출현중인 아군 탱크 수 받아오기
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		err_display("recv()");
+		return;
 	}
+	else if (retval == 0)
+		return;
+
+
+	tempTankdata = (Tank_data*)Tankdatabuf;
+	for (int i = 0; i < num; i++)
+		enemytank.push_back(&tempTankdata[i]);
 }
 
 void Guardianrecv()
@@ -267,15 +284,6 @@ void Guardianrecv()
 
 	armyGuardian = *GuardianBuf;
 
-	printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n",
-		armyGuardian.hp, armyGuardian.x, armyGuardian.y, armyGuardian.z, armyGuardian.angle, armyGuardian.Rangle, armyGuardian.Langle);
-
-	// 아군 가디언 수신 완료 메세지 보내기
-	retval = send(sock, (char*)TEXT("아군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
-	if (retval == SOCKET_ERROR) {
-		err_display("send()");
-	}
-
 	// 적군 가디언
 	retval = recv(sock, (char*)buf, sizeof(Guardian_Data), 0);
 	if (retval == SOCKET_ERROR) {
@@ -289,14 +297,6 @@ void Guardianrecv()
 
 	enemyGuardian = *GuardianBuf;
 
-	printf("[TCP 클라이언트] 아군 가디언 정보 armyGuardian의 hp : %d, x : %.2f, y : %.2f, z : %.2f, angle : %d, Rangle : %.2f, Langle : %.2f \n",
-		enemyGuardian.hp, enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, enemyGuardian.angle, enemyGuardian.Rangle, enemyGuardian.Langle);
-
-	// 적군 가디언 수신 완료 메세지 보내기
-	retval = send(sock, (char*)TEXT("적군 가디언 수신 완료\n"), sizeof(char) * 23, 0);
-	if (retval == SOCKET_ERROR) {
-		err_display("send()");
-	}
 }
 // 윈도우 출력 함수s
 GLvoid drawScene(GLvoid)
@@ -509,7 +509,7 @@ GLvoid TimerFunction(int value)
 
 
 	glutPostRedisplay();
-	glutTimerFunc(1, TimerFunction, 10);
+	glutTimerFunc(1, TimerFunction, 1);
 }
 
 GLvoid setup()

@@ -9,6 +9,7 @@
 #include <math.h>
 #include <sys/timeb.h>
 #include <list>
+#include <vector>
 
 using namespace std;
 

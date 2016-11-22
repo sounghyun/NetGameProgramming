@@ -3,6 +3,12 @@
 
 #include "struct_package.h"
 
+struct Ball_data {
+	GLfloat x, y, z;
+	GLfloat angle;
+	bool exist;
+};
+
 class Ball
 {
 public:
@@ -21,6 +27,16 @@ public:
 	bool collisionball(float x, float y, float z, float w, float h, float r);
 	void ranberCannonball();
 	void Cannonball_timer(GLfloat trasum);
+
+	Ball& operator=(const Ball_data& ref) {
+		this->x = ref.x;
+		this->y = ref.y;
+		this->z = ref.z;
+		this->angle = ref.angle;
+		this->exist = ref.exist;
+
+		return *this;
+	}
 };
 
 #endif // !CANNONBALL_H
