@@ -43,7 +43,7 @@ public:
 		else
 			this->time = 2730; };
 
-	void tankmove(list<Tank>& tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject);
+	void Tank::tankmove(list<Tank>& tankobject, list<Tower>& towerobject, Guardian *guardianobject, Basetower *baseobject);
 
 	void destroytank();
 };

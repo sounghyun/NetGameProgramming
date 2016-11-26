@@ -23,10 +23,11 @@ GLvoid setup();
 template<class Object>
 bool collision(Point p1, Object p2);
 
-void TankSned(SOCKET client_sock, SOCKADDR_IN clientaddr);
+void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
 void GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
-void Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr);
-void Server_Player_send();
+void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
+void Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int num);
+void Server_Player_send(SOCKET client_sock);
 
 CRITICAL_SECTION cs; // 임계 영역
 
@@ -36,8 +37,9 @@ GLint Ttime = 0;
 Basetower armybase, enemybase;
 Guardian_Data GuardianBuf;
 Guardian armyGuardian, enemyGuardian;
-Tower armytower[6], enemytower[6];
-Player self(0);
+list<Tower> armytower, enemytower;
+//Player self(0);
+vector<Player> playerlist, sampleplayerlist;
 Tank_data tankBuf;
 list<Tank> armytank, enemytank;
 Ball_data ballbuf;
@@ -59,7 +61,6 @@ void main(int argc, char *argv[])
 	struct timeb startimer, endtimer;
 	int timer = 0, oldtimer = 0;
 
-
 	ftime(&startimer);	// 타이머 시작 시간
 	while (1) {
 		WaitForSingleObject(Servermath, INFINITE);
@@ -67,12 +68,12 @@ void main(int argc, char *argv[])
 
 		timer = endtimer.millitm - startimer.millitm;		// 걸린 시간 계산
 
-		if (timer - oldtimer>10) {
+		if (timer - oldtimer > 10) {
 			Timer();
 		}
 
 		oldtimer = timer;
-		if (playernumber>0)									///플레이어가 한명 이상일 경우
+		if (playernumber > 0)									///플레이어가 한명 이상일 경우
 			SetEvent(Player_recv[0]);
 
 	}
@@ -197,16 +198,20 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	int retval;
 	SOCKADDR_IN clientaddr;
 	int addrlen;
-	FILE* f;
 
 	// 클라이언트 정보 얻기
 	addrlen = sizeof(clientaddr);
 	getpeername(client_sock, (SOCKADDR *)&clientaddr, &addrlen);
 
+	BOOL optval = TRUE;	//네이글 알고리즘 OFF
+	setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof(optval));
+
+
 	InitializeCriticalSection(&cs);
 	int current_playernumber = playernumber;
 
 	retval = send(client_sock, (char*)&playernumber, sizeof(int), 0);		// 플레이어 번호 보내기
+
 	playernumber++; //플레이어가 들어왔으니 숫자를 늘린다
 	HANDLE playerevent;
 	if (playernumber == 1)
@@ -214,19 +219,36 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	else
 		playerevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	Player_recv.push_back(playerevent);
+
+	player_data buf;
+	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);
+	Player temp;
+	temp.angle = buf.angle;
+	temp.x = buf.x;
+	temp.y = buf.y;
+	temp.z = buf.z;
+	temp.hp = buf.hp;
+
+	sampleplayerlist.push_back(temp);
+	playerlist.push_back(temp);
+
 	DeleteCriticalSection(&cs);
 
 	while (1) {
 		WaitForSingleObject(Player_recv[current_playernumber], INFINITE);
 
-		Server_Player_recv(client_sock, clientaddr);
+		printf("\r\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\r\n",
+			inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
-
-
-		TankSned(client_sock, clientaddr);
-		GuardianSend(client_sock, clientaddr);
-		Server_Player_send();
 		system("cls");
+
+		Server_Player_recv(client_sock, clientaddr, current_playernumber);
+
+		TankSend(client_sock, clientaddr);
+		GuardianSend(client_sock, clientaddr);
+		TowerSend(client_sock, clientaddr);
+
+		Server_Player_send(client_sock);	
 
 
 		if (playernumber - 1 > current_playernumber)					//자신의 다음 플레이어의 이벤트를 셋, 다음 값이 있다는 전제
@@ -248,20 +270,29 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	return 0;
 }
 
-void Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr)
+void Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int current_playernumber)
 {
 	int retval;
-	//retval = recv(client_sock, (char*)&num, sizeof(int), 0);		// 플레이어 정보 받기
-
+	player_data buf;
+	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);		// 플레이어 정보 받기
+																			//sampleplayerlist[current_playernumber] = (Player)&buf;
+	sampleplayerlist[current_playernumber] = buf;
 }
 
-void Server_Player_send()
+void Server_Player_send(SOCKET client_sock)
 {
-
-
+	int retval;
+	player_data *buf;
+	buf = new player_data[playernumber];
+	retval = send(client_sock, (char*)(&playernumber), sizeof(int), 0);
+	int i = 0;
+	for (auto& d : playerlist)
+		buf[i++] = d;
+	retval = send(client_sock, (char*)buf, sizeof(player_data)*(playernumber), 0);
 
 }
-void TankSned(SOCKET client_sock, SOCKADDR_IN clientaddr)
+
+void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 {
 	int retval, num;
 	Tank_data* temptankbuf;
@@ -327,6 +358,51 @@ void GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 		err_display("send()");
 	}
 }
+
+void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
+{
+	int retval, num;
+	Tower_data* tempTowerbuf;
+
+	// 아군 타워
+	num = armytower.size();	// 현재 출현중인 아군 타워 수 측정
+
+	retval = send(client_sock, (char*)&num, sizeof(int), 0);		// 출현중인 아군 타워 수 전송
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+
+	tempTowerbuf = new Tower_data[num];
+	// 아군 타워
+	int i = 0;
+	for (auto& d : armytower)
+		tempTowerbuf[i++] = d;
+
+	retval = send(client_sock, (char*)tempTowerbuf, sizeof(Tower_data) * num, 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+
+	// 적군 타워
+	num = enemytower.size();	// 현재 출현중인 적군 타워 수 측정
+
+	retval = send(client_sock, (char*)&num, sizeof(int), 0);		// 출현중인 아군 타워 수 전송
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+
+	tempTowerbuf = new Tower_data[num];
+	// 적군 타워의 포탄
+	i = 0;
+	for (auto& d : enemytower)
+		tempTowerbuf[i++] = d;
+
+	retval = send(client_sock, (char*)tempTowerbuf, sizeof(Tower_data) * num, 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("send()");
+	}
+}
+
 void Timer()
 {
 	InitializeCriticalSection(&cs);
@@ -338,56 +414,11 @@ void Timer()
 			enemytank.push_back(Tank(180, i % 3));
 		}
 	}
-	if (UDcontral == 1)
-	{
-		self.x -= 0.5*sin(self.angle * (3.14 / 180));
-		self.z -= 0.5*cos(self.angle * (3.14 / 180));
-		for (int y = 0; y < 3; y++)
-		{
-			for (int x = 0; x < 20; x++)
-			{
-				for (int z = 0; z < 50; z++)
-				{
-					if (((Map[x][y][z].state != 2 && Map[x][y][z].state != 4 && Map[x][y][z].state != 3 && Map[x][y][z].state) || (Map[x][y][z].state == 2 && (z < 5 || z > 45))) && collision(Map[x][y][z], self))
-					{
-						self.x += 0.5*sin(self.angle * (3.14 / 180));
-						self.z += 0.5*cos(self.angle * (3.14 / 180));
-					}
-				}
-			}
-		}
-	}
-	if (UDcontral == 2)
-	{
-		self.x += 0.5*sin(self.angle * (3.14 / 180));
-		self.z += 0.5*cos(self.angle * (3.14 / 180));
-		for (int y = 0; y < 3; y++)
-		{
-			for (int x = 0; x < 20; x++)
-			{
-				for (int z = 0; z < 50; z++)
-				{
-					if (((Map[x][y][z].state != 2 && Map[x][y][z].state != 4 && Map[x][y][z].state) || (Map[x][y][z].state == 2 && (z < 5 || z > 45))) && collision(Map[x][y][z], self))
-					{
-						self.x -= 0.5*sin(self.angle * (3.14 / 180));
-						self.z -= 0.5*cos(self.angle * (3.14 / 180));
-					}
-				}
-			}
-		}
-	}
-	if (LRcontral == 1)
-		self.angle += 1;
-	if (LRcontral == 2)
-		self.angle -= 1;
 
-	if (self.y > 5)
-		self.y -= 10;
-	for (int y = 0; y < 3; y++)
-		for (int x = 0; x < 20; x++)
-			for (int z = 0; z < 50; z++)
-				if (Map[x][y][z].state == 3 && collision(Map[x][y][z], self))
-					self.y += 10;
+	for (int i = 0; i < playernumber; i++)
+	{
+		playerlist[i] = sampleplayerlist[i];
+	}
 
 	selfball.Cannonball_timer(0.2);
 
@@ -409,19 +440,22 @@ void Timer()
 	armybase.destroytower();
 	enemybase.destroytower();
 
-	for (int i = 0; i < 6; i++)
+	for (auto &d : armytower)
 	{
-		if (selfball.exist && armytower[i].hp > 0 && selfball.collisionball(armytower[i].x, armytower[i].y, armytower[i].z, 10, 10, 5))
+		if (selfball.exist && d.hp > 0 && selfball.collisionball(d.x, d.y, d.z, 10, 10, 5))
 			selfball.exist = false;
-		if (selfball.exist && enemytower[i].hp > 0 && selfball.collisionball(enemytower[i].x, enemytower[i].y, enemytower[i].z, 10, 10, 5))
+		d.towerattck(enemytank);
+		d.destroytower();
+	}
+	for (auto &d : enemytower)
+	{
+		if (selfball.exist && d.hp > 0 && selfball.collisionball(d.x, d.y, d.z, 10, 10, 5))
 		{
 			selfball.exist = false;
-			enemytower[i].hp -= 2;
+			d.hp -= 2;
 		}
-		armytower[i].towerattck(enemytank);
-		enemytower[i].towerattck(armytank);
-		armytower[i].destroytower();
-		enemytower[i].destroytower();
+		d.towerattck(enemytank);
+		d.destroytower();
 	}
 
 	if (selfball.exist && armyGuardian.hp > 0 && selfball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
@@ -454,6 +488,9 @@ void Timer()
 	armytank.remove_if([](Tank object)->bool {return !object.exist; });
 	enemytank.remove_if([](Tank object)->bool {return !object.exist; });
 
+	armytower.remove_if([](Tower object)->bool {return !object.exist; });
+	enemytower.remove_if([](Tower object)->bool {return !object.exist; });
+
 	armyGuardian.guardianmove();
 	enemyGuardian.guardianmove();
 
@@ -464,15 +501,9 @@ GLvoid setup()
 {
 	mapload();
 
-	self.angle = 0;
-	self.y = 5;
-	self.z = -35;
-	self.x = 100;
-
 	armybase.setup(20, 100, -20, 180, true);
 	enemybase.setup(20, 100, -480, 0, true);
 
-	int armycount = 0, enemycount = 0;
 	for (int x = 0; x < 20; x++)
 	{
 		for (int z = 5; z < 45; z++)
@@ -481,17 +512,13 @@ GLvoid setup()
 			{
 				if (z < 25)
 				{
-					armytower[armycount].setup(10, \
-						(Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z, \
-						180, true);
-					armycount = (armycount + 1) % 6;
+					Tower temp(10, (Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z, 180, true);
+					armytower.push_back(temp);
 				}
 				else
 				{
-					enemytower[enemycount].setup(10, \
-						(Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z, \
-						0, true);
-					enemycount = (enemycount + 1) % 6;
+					Tower temp(10, (Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z, 0, true);
+					enemytower.push_back(temp);
 				}
 			}
 		}

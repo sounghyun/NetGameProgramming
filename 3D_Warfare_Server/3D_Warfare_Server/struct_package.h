@@ -19,6 +19,18 @@ struct Point
 	GLint state;
 };
 
+class Player;
+
+class player_data
+{
+public:
+	int hp;
+	float x, y, z;
+	int angle;
+
+	player_data&  operator=(const Player& ref);
+};
+
 class Player
 {
 public:
@@ -26,12 +38,16 @@ public:
 	float x, y, z;
 	int angle;
 
-	Player(int angle) : 
-		x(100),
-		y(5),
-		z(-35),
-		angle(angle)
+	Player() {}
+
+	Player(player_data ref) :
+	hp(ref.hp),
+	x(ref.x),
+	y(ref.y),
+	z(ref.z),
+	angle(ref.angle)
 	{}
 };
+
 
 #endif

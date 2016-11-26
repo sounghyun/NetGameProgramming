@@ -16,9 +16,14 @@ public:
 	bool exist;
 	Ball cannonball;
 
-	Tower() {};
-
-	void setup(int hp, float x, float z, float angle, bool exist);
+	Tower(int hp, float x, float z, float angle, bool exist) {
+		this->hp = hp;
+		this->x = x, this->y = 0, this->z = z;
+		this->h = 10;
+		this->w = 10;
+		this->r = 5;
+		this->angle = angle, this->exist = exist;
+	};
 
 	int GetHP() { return hp; };
 	int GetX() { return x; };
@@ -27,11 +32,30 @@ public:
 	int GetAngle() { return angle; };
 	int GetExist() { return exist; };
 
-	void ranbertower();
-
 	void towerattck(list<Tank>& tankobject);
 
 	void destroytower();
+};
+
+struct Tower_data
+{
+	int hp;
+	float x, y, z;
+	int angle;
+	bool exist;
+	Ball_data cannonball;
+
+	Tower_data& operator=(const Tower& ref) {
+		this->hp = ref.hp;
+		this->x = ref.x;
+		this->y = ref.y;
+		this->z = ref.z;
+		this->angle = ref.angle;
+		this->exist = ref.exist;
+		this->cannonball = ref.cannonball;
+
+		return *this;
+	}
 };
 
 #endif // !TOWER_H

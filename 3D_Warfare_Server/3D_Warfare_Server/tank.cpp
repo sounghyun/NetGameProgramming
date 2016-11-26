@@ -6,7 +6,7 @@
 #include "basetower.h"
 #include "guardian.h"
 
-void Tank::tankmove(list<Tank>& tankobject, Tower *towerobject, Guardian *guardianobject, Basetower *baseobject)
+void Tank::tankmove(list<Tank>& tankobject, list<Tower>& towerobject, Guardian *guardianobject, Basetower *baseobject)
 {
 	if (this->hp > 0)
 	{
@@ -64,12 +64,12 @@ void Tank::tankmove(list<Tank>& tankobject, Tower *towerobject, Guardian *guardi
 				baseobject->hp--;
 		}
 
-		for (int i = 0; i < 6; i++)
+		for (auto &d : towerobject)
 		{
-			if (this->cannonball.exist && towerobject[i].hp>0 && this->cannonball.collisionball(towerobject[i].x, towerobject[i].y, towerobject[i].z, 10, 10, 5))
+			if (this->cannonball.exist && d.hp>0 && this->cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
 			{
 				this->cannonball.exist = false;
-				towerobject[i].hp--;
+				d.hp--;
 			}
 		}
 

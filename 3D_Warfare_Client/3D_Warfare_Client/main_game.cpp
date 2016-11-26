@@ -15,9 +15,6 @@
 void err_quit(char *msg);
 void err_display(char *msg);
 
-// 사용자 정의 데이터 수신 함수
-int recvn(SOCKET s, char *buf, int len, int flags);
-
 // 소켓 통신 스레드 함수
 DWORD WINAPI ClientMain(LPVOID arg);
 
@@ -33,6 +30,7 @@ bool collision(Point p1, Object p2);				// 객체, 맵 충돌 체크
 
 void Guardianrecv();
 void Tankrecv();
+void Towerrecv();
 void Client_Players_send();
 void Client_Players_recv();
 
@@ -44,15 +42,18 @@ GLint Ttime = 0;		// 총 시간
 Basetower armybase, enemybase;	// 아군본부, 적군본부
 Guardian_Data* GuardianBuf;
 Guardian armyGuardian, enemyGuardian;	// 아군가디언, 적군가디언
-Tower armytower[6], enemytower[6];
+Tower_data* TowerBuf;
+list<Tower> armytower, enemytower;
 Player self(0);
+vector <Player> playerlist;
 Tank_data* TankBuf;
 list<Tank> armytank, enemytank;
 list<Tank>* armytank_buf, enemytank_buf;
 Ball_data* ballbuf;
 GLint LRcontral, UDcontral;
 Ball selfball;
-int playernumber;
+int playernumber;							//플레이어 번호
+int totalplayernumber;						//전체 플레이어 숫자
 
 void main(int argc, char *argv[])
 {
@@ -120,26 +121,6 @@ void err_display(char *msg)
 	LocalFree(lpMsgBuf);
 }
 
-// 사용자 정의 데이터 수신 함수
-int recvn(SOCKET s, char *buf, int len, int flags)
-{
-	int received;
-	char *ptr = buf;
-	int left = len;
-
-	while (left > 0) {
-		received = recv(s, ptr, left, flags);
-		if (received == SOCKET_ERROR)
-			return SOCKET_ERROR;
-		else if (received == 0)
-			break;
-		left -= received;
-		ptr += received;
-	}
-
-	return (len - left);
-}
-
 // TCP 클라이언트 시작 부분
 DWORD WINAPI ClientMain(LPVOID arg)
 {
@@ -154,6 +135,9 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock == INVALID_SOCKET) err_quit("socket()");
 
+	BOOL optval = TRUE;
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&optval, sizeof(optval));
+
 	// connect()
 	SOCKADDR_IN serveraddr;
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
@@ -166,7 +150,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	retval = recv(sock, (char*)&playernumber, sizeof(int), 0);//플레이어 번호 받기
 	printf("플레이어 번호 : %d\n", playernumber);
 
-	self.y = 5;
+	self.y = 0;
 	self.x = 100;
 
 	if (playernumber % 2 == 1)
@@ -180,6 +164,10 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		self.angle = 0;
 	}
 
+	player_data buf;
+	buf = self;
+	retval = send(sock, (char*)&buf, sizeof(player_data), 0);  //플레이어 정보 제공
+
 	// 서버와 데이터 통신
 	while (1) {
 		WaitForSingleObject(hWriteEvent, INFINITE); // 쓰기 완료 기다리기
@@ -187,6 +175,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		Tankrecv();
 		Guardianrecv();
+		Towerrecv();
 
 		Client_Players_recv();
 
@@ -200,11 +189,38 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 void Client_Players_send()
 {
-
+	int retval;
+	player_data buf;
+	buf = self;
+	retval = send(sock, (char*)&buf, sizeof(player_data), 0);		// 플레이어 정보 보내기
 }
 
 void Client_Players_recv()
 {
+
+	recv(sock, (char*)&totalplayernumber, sizeof(int), 0);
+	char* playerdatabuf;
+	player_data* playerdata;
+
+	playerdatabuf = new char[sizeof(player_data)*totalplayernumber];
+
+
+	playerlist.clear();
+	recv(sock, (char*)playerdatabuf, sizeof(player_data) * totalplayernumber, 0);
+
+	playerdata = (player_data*)playerdatabuf;
+
+	Player temp(0);
+
+	for (int i = 0; i < totalplayernumber; i++)
+	{
+		temp.angle = playerdata[i].angle;
+		temp.x = playerdata[i].x;
+		temp.y = playerdata[i].y;
+		temp.z = playerdata[i].z;
+		temp.hp = playerdata[i].hp;
+		playerlist.push_back(temp);
+	}
 
 }
 
@@ -264,6 +280,63 @@ void Tankrecv()
 	tempTankdata = (Tank_data*)Tankdatabuf;
 	for (int i = 0; i < num; i++)
 		enemytank.push_back(&tempTankdata[i]);
+}
+
+void Towerrecv()
+{
+	int retval, num;
+	char* Towerdatabuf;
+	Tower_data* tempTowerdata;
+
+	// 아군 타워
+	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 아군 타워 수 받아오기
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	armytower.clear(); // 과거 시점의 아군 타워 정보 초기화
+
+	Towerdatabuf = new char[sizeof(Tower_data) * num];
+	retval = recv(sock, (char*)Towerdatabuf, sizeof(Tower_data) * num, 0);		// 현재 출현중인 아군 타워
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+
+	tempTowerdata = (Tower_data*)Towerdatabuf;
+	for (int i = 0; i < num; i++)
+		armytower.push_back(&tempTowerdata[i]);
+
+	// 적군 타워
+	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 적군 타워 수 받아오기
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	enemytower.clear(); // 과거 시점의 적군 탱크 정보 초기화
+
+	Towerdatabuf = new char[sizeof(Tower_data) * num];
+	retval = recv(sock, (char*)Towerdatabuf, sizeof(Tower_data) * num, 0);		// 현재 출현중인 적군 타워
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+
+	tempTowerdata = (Tower_data*)Towerdatabuf;
+	for (int i = 0; i < num; i++)
+		enemytower.push_back(&tempTowerdata[i]);
 }
 
 void Guardianrecv()
@@ -327,20 +400,36 @@ GLvoid drawScene(GLvoid)
 	armybase.ranberbasetower();
 	enemybase.ranberbasetower();
 
-	for (int i = 0; i < 6; i++)
+	for (auto& d : armytower)
 	{
-		armytower[i].ranbertower();
-		enemytower[i].ranbertower();
-		armytower[i].cannonball.ranberCannonball();
-		enemytower[i].cannonball.ranberCannonball();
+		d.ranbertower();
+		d.cannonball.ranberCannonball();
 	}
+	for (auto& d : enemytower)
+	{
+		d.ranbertower();
+		d.cannonball.ranberCannonball();
+	}
+	
 	glPopMatrix();
 
 	glPushMatrix();
 	if (viewmode)
-		self.ranbertank(true);
+		for (auto& d : playerlist)
+			d.ranbertank(true);
 	else
-		self.ranbertank(false);
+	{
+		auto& d = playerlist.begin();
+		int i = 0;
+		while (d != playerlist.end())
+		{
+			if (i++ == playernumber)
+				d->ranbertank(false);
+			else
+				d->ranbertank(true);
+			d++;
+		}
+	}
 
 	selfball.ranberCannonball();
 	glPopMatrix();
@@ -389,7 +478,7 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 	if (key == 'i')
 	{
 		self.angle = 0;
-		self.y = 5;
+		self.y = 0;
 		self.z = -35;
 		self.x = 100;
 	}
@@ -517,14 +606,13 @@ GLvoid setup()
 	mapload();
 
 	self.angle = 0;
-	self.y = 5;
+	self.y = 0;
 	self.z = -35;
 	self.x = 100;
 
 	armybase.setup(20, 100, -20, 180, true);
 	enemybase.setup(20, 100, -480, 0, true);
 
-	int armycount = 0, enemycount = 0;
 	for (int x = 0; x < 20; x++)
 	{
 		for (int z = 5; z < 45; z++)
@@ -533,21 +621,18 @@ GLvoid setup()
 			{
 				if (z < 25)
 				{
-					armytower[armycount].setup(10, \
-						(Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z,\
-						180, true);
-					armycount = (armycount + 1) % 6;
+					Tower temp;
+					armytower.push_back(temp);
 				}
 				else
 				{
-					enemytower[enemycount].setup(10, \
-						(Map[x][0][z].x + Map[x - 1][0][z].x) / 2, Map[x][0][z].z, \
-						0, true);
-					enemycount = (enemycount + 1) % 6;
+					Tower temp;
+					enemytower.push_back(temp);
 				}
 			}
 		}
 	}
+	
 }
 
 template<class Object>

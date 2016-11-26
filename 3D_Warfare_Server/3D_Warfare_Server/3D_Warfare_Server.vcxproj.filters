@@ -36,6 +36,9 @@
     <ClCompile Include="tower.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="struct_package.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basetower.h">

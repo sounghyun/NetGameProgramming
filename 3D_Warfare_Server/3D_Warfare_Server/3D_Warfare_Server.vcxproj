@@ -147,6 +147,7 @@
     <ClCompile Include="guardian.cpp" />
     <ClCompile Include="main_game.cpp" />
     <ClCompile Include="map.cpp" />
+    <ClCompile Include="struct_package.cpp" />
     <ClCompile Include="tank.cpp" />
     <ClCompile Include="tower.cpp" />
   </ItemGroup>

@@ -6,6 +6,15 @@
 
 class Tank;
 
+struct Tower_data
+{
+	int hp;
+	float x, y, z;
+	int angle;
+	bool exist;
+	Ball_data cannonball;
+};
+
 class Tower
 {
 public:
@@ -18,7 +27,19 @@ public:
 
 	Tower() {};
 
-	void setup(int hp, float x, float z, float angle, bool exist);
+	Tower(Tower_data* ref) : 
+		hp(ref->hp),
+		angle(ref->angle),
+		x(ref->x),
+		y(ref->y),
+		z(ref->z),
+		h(10),
+		w(10),
+		r(10),
+		exist(ref->exist)
+	{
+		this->cannonball = ref->cannonball;
+	};
 
 	int GetHP() { return hp; };
 	int GetX() { return x; };
@@ -28,8 +49,6 @@ public:
 	int GetExist() { return exist; };
 
 	void ranbertower();
-
-	void towerattck(Tank *tankobject);
 
 	void destroytower();
 };
