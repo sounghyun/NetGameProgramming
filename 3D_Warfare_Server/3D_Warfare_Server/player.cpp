@@ -1,7 +1,7 @@
-#ifndef STRUCT_PACKAGE
-#define STRUCT_PACKAGE
+#ifndef PLAYER
+#define PLAYER
 
-#include "struct_package.h"
+#include "player.h"
 
 player_data&  player_data::operator=(const Player& ref)
 {
@@ -10,6 +10,8 @@ player_data&  player_data::operator=(const Player& ref)
 	this->y = ref.y;
 	this->z = ref.z;
 	this->angle = ref.angle;
+	this->cannonball = ref.cannonball;
+
 	return *this;
 }
 

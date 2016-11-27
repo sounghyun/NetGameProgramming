@@ -3,6 +3,7 @@
 #include "struct_package.h"
 #include "map.h"
 #include "cannonball.h"
+#include "player.h"
 #include "tank.h"
 #include "tower.h"
 #include "basetower.h"
@@ -44,7 +45,6 @@ Tank_data tankBuf;
 list<Tank> armytank, enemytank;
 Ball_data ballbuf;
 GLint LRcontral, UDcontral;
-Ball selfball;
 
 HANDLE  Servermath;
 vector<HANDLE> Player_recv;
@@ -222,15 +222,9 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 	player_data buf;
 	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);
-	Player temp;
-	temp.angle = buf.angle;
-	temp.x = buf.x;
-	temp.y = buf.y;
-	temp.z = buf.z;
-	temp.hp = buf.hp;
 
-	sampleplayerlist.push_back(temp);
-	playerlist.push_back(temp);
+	sampleplayerlist.push_back(buf);
+	playerlist.push_back(buf);
 
 	DeleteCriticalSection(&cs);
 
@@ -409,6 +403,7 @@ void Timer()
 	Ttime++;
 	if (Ttime % 800 == 0)
 	{
+		Ttime = 0;
 		for (int i = 0; i < 3; i++) {
 			armytank.push_back(Tank(0, i % 3));
 			enemytank.push_back(Tank(180, i % 3));
@@ -420,51 +415,82 @@ void Timer()
 		playerlist[i] = sampleplayerlist[i];
 	}
 
-	selfball.Cannonball_timer(0.2);
-
-	if (selfball.exist)
-		for (int y = 0; y < 3; y++)
-			for (int x = 0; x < 20; x++)
-				for (int z = 0; z < 50; z++)
-					if (Map[x][y][z].state == 1 && selfball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
-						selfball.exist = false;
-
-	if (selfball.exist && armybase.hp > 0 && selfball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
-		selfball.exist = false;
-	if (selfball.exist && armybase.hp > 0 && selfball.collisionball(enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
+	for (auto &d : playerlist) 
 	{
-		selfball.exist = false;
-		if (!enemyGuardian.exist)
-			enemybase.hp -= 2;
+		d.cannonball.Cannonball_timer(0.2);
+
+		if (d.cannonball.exist)
+			for (int y = 0; y < 3; y++)
+				for (int x = 0; x < 20; x++)
+					for (int z = 0; z < 50; z++)
+						if (Map[x][y][z].state == 1 && d.cannonball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
+							d.cannonball.exist = false;
+
+		if (d.cannonball.exist && armybase.hp > 0 && d.cannonball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
+			d.cannonball.exist = false;
+		if (d.cannonball.exist && armybase.hp > 0 && d.cannonball.collisionball(enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
+		{
+			d.cannonball.exist = false;
+			if (!enemyGuardian.exist)
+				enemybase.hp -= 2;
+		}
+
+		for (auto &d : armytower)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
+				d.cannonball.exist = false;
+		}
+
+		for (auto &d : enemytower)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
+			{
+				d.cannonball.exist = false;
+				d.hp -= 2;
+			}
+		}
+
+		if (d.cannonball.exist && armyGuardian.hp > 0 && d.cannonball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
+			d.cannonball.exist = false;
+		if (d.cannonball.exist && enemyGuardian.hp > 0 && d.cannonball.collisionball(enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
+		{
+			d.cannonball.exist = false;
+			enemyGuardian.hp -= 2;
+		}
+
+		for (Tank& d : armytank)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, d.w, d.h, d.r))
+				d.cannonball.exist = false;
+		}
+
+		for (Tank& d : enemytank)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 10))
+				d.cannonball.exist = false;
+		}
 	}
+
+	
+
+	
+
+	
 	armybase.destroytower();
 	enemybase.destroytower();
 
 	for (auto &d : armytower)
 	{
-		if (selfball.exist && d.hp > 0 && selfball.collisionball(d.x, d.y, d.z, 10, 10, 5))
-			selfball.exist = false;
 		d.towerattck(enemytank);
 		d.destroytower();
 	}
 	for (auto &d : enemytower)
 	{
-		if (selfball.exist && d.hp > 0 && selfball.collisionball(d.x, d.y, d.z, 10, 10, 5))
-		{
-			selfball.exist = false;
-			d.hp -= 2;
-		}
 		d.towerattck(enemytank);
 		d.destroytower();
 	}
 
-	if (selfball.exist && armyGuardian.hp > 0 && selfball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
-		selfball.exist = false;
-	if (selfball.exist && enemyGuardian.hp > 0 && selfball.collisionball(enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
-	{
-		selfball.exist = false;
-		enemyGuardian.hp -= 2;
-	}
+
 	armyGuardian.destroyguardian();
 	enemyGuardian.destroyguardian();
 
@@ -472,8 +498,6 @@ void Timer()
 	{
 		if (d.exist)
 			d.tankmove(enemytank, enemytower, &enemyGuardian, &enemybase);
-		if (selfball.exist && d.hp > 0 && selfball.collisionball(d.x, d.y, d.z, d.w, d.h, d.r))
-			selfball.exist = false;
 		d.destroytank();
 	}
 
@@ -481,10 +505,9 @@ void Timer()
 	{
 		if (d.exist)
 			d.tankmove(armytank, armytower, &armyGuardian, &armybase);
-		if (selfball.exist && d.hp > 0 && selfball.collisionball(d.x, d.y, d.z, 10, 10, 10))
-			selfball.exist = false;
 		d.destroytank();
 	}
+
 	armytank.remove_if([](Tank object)->bool {return !object.exist; });
 	enemytank.remove_if([](Tank object)->bool {return !object.exist; });
 

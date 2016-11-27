@@ -147,6 +147,7 @@
     <ClCompile Include="guardian.cpp" />
     <ClCompile Include="main_game.cpp" />
     <ClCompile Include="map.cpp" />
+    <ClCompile Include="player.cpp" />
     <ClCompile Include="tank.cpp" />
     <ClCompile Include="tower.cpp" />
   </ItemGroup>
@@ -155,6 +156,7 @@
     <ClInclude Include="cannonball.h" />
     <ClInclude Include="guardian.h" />
     <ClInclude Include="map.h" />
+    <ClInclude Include="player.h" />
     <ClInclude Include="struct_package.h" />
     <ClInclude Include="tank.h" />
     <ClInclude Include="tower.h" />

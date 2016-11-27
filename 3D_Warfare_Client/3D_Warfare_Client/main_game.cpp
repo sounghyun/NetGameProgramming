@@ -3,6 +3,7 @@
 #include "struct_package.h"
 #include "map.h"
 #include "cannonball.h"
+#include "player.h"
 #include "tank.h"
 #include "tower.h"
 #include "basetower.h"
@@ -51,7 +52,6 @@ list<Tank> armytank, enemytank;
 list<Tank>* armytank_buf, enemytank_buf;
 Ball_data* ballbuf;
 GLint LRcontral, UDcontral;
-Ball selfball;
 int playernumber;							//플레이어 번호
 int totalplayernumber;						//전체 플레이어 숫자
 
@@ -210,17 +210,8 @@ void Client_Players_recv()
 
 	playerdata = (player_data*)playerdatabuf;
 
-	Player temp(0);
-
 	for (int i = 0; i < totalplayernumber; i++)
-	{
-		temp.angle = playerdata[i].angle;
-		temp.x = playerdata[i].x;
-		temp.y = playerdata[i].y;
-		temp.z = playerdata[i].z;
-		temp.hp = playerdata[i].hp;
-		playerlist.push_back(temp);
-	}
+		playerlist.push_back(playerdata[i]);
 
 }
 
@@ -228,7 +219,6 @@ void Tankrecv()
 {
 	int retval, num;
 	char* Tankdatabuf;
-	char* buf2[sizeof(Ball_data)];
 	Tank_data* tempTankdata;
 
 	// 아군 탱크
@@ -388,7 +378,7 @@ GLvoid drawScene(GLvoid)
 	else
 	{
 		glRotated(-self.angle, 0, 1, 0);
-		glTranslated(-self.x, -self.y, -self.z);
+		glTranslated(-self.x, -(self.y+5), -self.z+5);
 		gluLookAt(0, 0, 1, 0, 0, 0, 0, 1, 0);
 	}
 
@@ -431,7 +421,9 @@ GLvoid drawScene(GLvoid)
 		}
 	}
 
-	selfball.ranberCannonball();
+	for(auto &d : playerlist)
+		d.cannonball.ranberCannonball();
+
 	glPopMatrix();
 
 	glPushMatrix();
@@ -485,15 +477,9 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 	if (key == 'm')
 		viewmode = (viewmode + 1) % 2;
 
-	if (key == 32 && selfball.exist == false && selfball.delaytime == 0)
+	if (key == 32 && playerlist[playernumber].cannonball.exist == false && playerlist[playernumber].cannonball.delaytime == 0)
 	{
-		selfball.z = self.z + 1;
-		selfball.x = self.x;
-		selfball.track = 0;
-		selfball.y = self.y - 1;
-		selfball.angle = self.angle;
-		selfball.exist = true;
-		selfball.delaytime = 60;
+		playerlist[playernumber].ballcreate();
 	}
 
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_ON);
@@ -565,36 +551,13 @@ GLvoid TimerFunction(int value)
 	if (LRcontral == 2)
 		self.angle -= 1;
 
-	if (self.y > 5)
+	if (self.y > 9)
 		self.y-=10;
 	for (int y = 0; y < 3; y++)
 		for (int x = 0; x < 20; x++)
 			for (int z = 0; z < 50; z++)
 				if (Map[x][y][z].state == 3 && collision(Map[x][y][z], self))
 					self.y += 10;
-
-	selfball.Cannonball_timer(0.2);
-
-	if (selfball.exist)
-		for (int y = 0; y < 3; y++)
-			for (int x = 0; x < 20; x++)
-				for (int z = 0; z < 50; z++)
-					if (Map[x][y][z].state == 1 && selfball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
-						selfball.exist = false;
-
-	if (selfball.exist && armybase.hp>0 && selfball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
-		selfball.exist = false;
-	if (selfball.exist && armybase.hp>0 && selfball.collisionball(enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
-	{
-		selfball.exist = false;
-		if (!enemyGuardian.exist)
-			enemybase.hp-=2;
-	}
-	armybase.destroytower();
-	enemybase.destroytower();
-
-	armyGuardian.destroyguardian();
-	enemyGuardian.destroyguardian();
 
 
 	glutPostRedisplay();
