@@ -48,9 +48,9 @@ void Player::ranbertank(bool body)
 		glRotated(this->angle, 0, 1, 0);
 
 		glColor3d(1, 0, 1);
-		glTranslated(0, -1, -2);
+		glTranslated(0, 3.5, -4);
 		glRotated(30, 1, 0, 0);
-		glScaled(0.5, 0.25, 3);
+		glScaled(1, 0.25, 3);
 		glutSolidCube(0.75);
 	}
 

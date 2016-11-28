@@ -47,7 +47,7 @@ Ball_data ballbuf;
 GLint LRcontral, UDcontral;
 
 HANDLE  Servermath;
-vector<HANDLE> Player_recv;
+vector<HANDLE> Player_recv, Player_send;
 
 void main(int argc, char *argv[])
 {
@@ -56,7 +56,7 @@ void main(int argc, char *argv[])
 
 	// 소켓 통신 스레드 생성
 	CreateThread(NULL, 0, ServerMain, NULL, 0, NULL);
-	Servermath = CreateEvent(NULL, FALSE, TRUE, NULL);
+	Servermath = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	struct timeb startimer, endtimer;
 	int timer = 0, oldtimer = 0;
@@ -74,11 +74,11 @@ void main(int argc, char *argv[])
 
 		oldtimer = timer;
 		if (playernumber > 0)									///플레이어가 한명 이상일 경우
-			SetEvent(Player_recv[0]);
+			SetEvent(Player_send[0]);
 
 	}
 
-	WaitForSingleObject(ServerMain, INFINITY);
+	//WaitForSingleObject(ServerMain, INFINITY);
 }
 
 // 소켓 함수 오류 출력 후 종료
@@ -220,6 +220,9 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		playerevent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	Player_recv.push_back(playerevent);
 
+	playerevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Player_send.push_back(playerevent);
+
 	player_data buf;
 	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);
 
@@ -238,6 +241,18 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 		Server_Player_recv(client_sock, clientaddr, current_playernumber);
 
+		if (playernumber - 1 > current_playernumber)					//자신의 다음 플레이어의 이벤트를 셋, 다음 값이 있다는 전제
+		{
+			SetEvent(Player_recv[current_playernumber + 1]);
+		}
+
+		if (current_playernumber == playernumber - 1)			//마지막 플레이어 전송 후 연산이벤트를 셋
+		{
+			SetEvent(Servermath);
+		}
+
+		WaitForSingleObject(Player_send[current_playernumber], INFINITE);
+
 		TankSend(client_sock, clientaddr);
 		GuardianSend(client_sock, clientaddr);
 		TowerSend(client_sock, clientaddr);
@@ -247,12 +262,12 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 		if (playernumber - 1 > current_playernumber)					//자신의 다음 플레이어의 이벤트를 셋, 다음 값이 있다는 전제
 		{
-			SetEvent(Player_recv[current_playernumber + 1]);
+			SetEvent(Player_send[current_playernumber + 1]);
 		}
 
 		if (current_playernumber == playernumber - 1)			//마지막 플레이어 전송 후 연산이벤트를 셋
 		{
-			SetEvent(Servermath);
+			SetEvent(Player_recv[0]);
 		}
 	}
 
@@ -415,59 +430,60 @@ void Timer()
 		playerlist[i] = sampleplayerlist[i];
 	}
 
-	for (auto &d : playerlist) 
+	for (auto &p : playerlist) 
 	{
-		d.cannonball.Cannonball_timer(0.2);
-
-		if (d.cannonball.exist)
+		
+		if (p.cannonball.exist)
 			for (int y = 0; y < 3; y++)
 				for (int x = 0; x < 20; x++)
 					for (int z = 0; z < 50; z++)
-						if (Map[x][y][z].state == 1 && d.cannonball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
-							d.cannonball.exist = false;
+						if (Map[x][y][z].state == 1 && p.cannonball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
+							p.cannonball.exist = false;
 
-		if (d.cannonball.exist && armybase.hp > 0 && d.cannonball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
-			d.cannonball.exist = false;
-		if (d.cannonball.exist && armybase.hp > 0 && d.cannonball.collisionball(enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
+		if (p.cannonball.exist && armybase.hp > 0 && p.cannonball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
+			p.cannonball.exist = false;
+		if (p.cannonball.exist && enemybase.hp > 0 && p.cannonball.collisionball(enemybase.x, enemybase.y, enemybase.z, 10, 10, 10))
 		{
-			d.cannonball.exist = false;
+			p.cannonball.exist = false;
 			if (!enemyGuardian.exist)
 				enemybase.hp -= 2;
 		}
 
 		for (auto &d : armytower)
 		{
-			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
-				d.cannonball.exist = false;
+			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
+				p.cannonball.exist = false;
 		}
 
 		for (auto &d : enemytower)
 		{
-			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
+			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
 			{
-				d.cannonball.exist = false;
+				p.cannonball.exist = false;
 				d.hp -= 2;
 			}
 		}
 
-		if (d.cannonball.exist && armyGuardian.hp > 0 && d.cannonball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
-			d.cannonball.exist = false;
-		if (d.cannonball.exist && enemyGuardian.hp > 0 && d.cannonball.collisionball(enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
+		if (p.cannonball.exist && armyGuardian.hp > 0 && p.cannonball.collisionball(armyGuardian.x, armyGuardian.y, armyGuardian.z, 10, 15, 5))
+			p.cannonball.exist = false;
+		if (p.cannonball.exist && enemyGuardian.hp > 0 && p.cannonball.collisionball(enemyGuardian.x, enemyGuardian.y, enemyGuardian.z, 10, 15, 5))
 		{
-			d.cannonball.exist = false;
+			p.cannonball.exist = false;
 			enemyGuardian.hp -= 2;
 		}
 
 		for (Tank& d : armytank)
 		{
-			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, d.w, d.h, d.r))
-				d.cannonball.exist = false;
+			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, d.w, d.h, d.r))
+				p.cannonball.exist = false;
 		}
 
 		for (Tank& d : enemytank)
 		{
-			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 10))
-				d.cannonball.exist = false;
+			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 10)) {
+				p.cannonball.exist = false;
+				d.hp -= 2;
+			}
 		}
 	}
 

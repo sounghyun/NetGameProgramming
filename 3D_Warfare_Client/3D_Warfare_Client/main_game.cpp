@@ -213,6 +213,7 @@ void Client_Players_recv()
 	for (int i = 0; i < totalplayernumber; i++)
 		playerlist.push_back(playerdata[i]);
 
+	
 }
 
 void Tankrecv()
@@ -378,7 +379,7 @@ GLvoid drawScene(GLvoid)
 	else
 	{
 		glRotated(-self.angle, 0, 1, 0);
-		glTranslated(-self.x, -(self.y+5), -self.z+5);
+		glTranslated(-self.x, -(self.y+5), -self.z);
 		gluLookAt(0, 0, 1, 0, 0, 0, 0, 1, 0);
 	}
 
@@ -414,15 +415,17 @@ GLvoid drawScene(GLvoid)
 		while (d != playerlist.end())
 		{
 			if (i++ == playernumber)
-				d->ranbertank(false);
+				self.ranbertank(false);
 			else
 				d->ranbertank(true);
 			d++;
 		}
 	}
 
-	for(auto &d : playerlist)
-		d.cannonball.ranberCannonball();
+	for (auto &d : playerlist) {
+		if(d.cannonball.exist)
+			d.cannonball.ranberCannonball();
+	}
 
 	glPopMatrix();
 
@@ -477,9 +480,9 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 	if (key == 'm')
 		viewmode = (viewmode + 1) % 2;
 
-	if (key == 32 && playerlist[playernumber].cannonball.exist == false && playerlist[playernumber].cannonball.delaytime == 0)
+	if (key == 32 && self.cannonball.exist == false && self.cannonball.delaytime == 0)
 	{
-		playerlist[playernumber].ballcreate();
+		self.ballcreate();
 	}
 
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_ON);
@@ -558,6 +561,9 @@ GLvoid TimerFunction(int value)
 			for (int z = 0; z < 50; z++)
 				if (Map[x][y][z].state == 3 && collision(Map[x][y][z], self))
 					self.y += 10;
+
+	if(self.cannonball.exist || self.cannonball.delaytime)
+		self.cannonball.Cannonball_timer(0.2);
 
 
 	glutPostRedisplay();
