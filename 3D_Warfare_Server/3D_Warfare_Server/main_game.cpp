@@ -237,7 +237,8 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		WaitForSingleObject(Player_recv[current_playernumber], INFINITE);
 
 		retval = Server_Player_recv(client_sock, clientaddr, current_playernumber);
-
+		if (retval == 0)
+			break;
 		if (playernumber - 1 > current_playernumber)					//자신의 다음 플레이어의 이벤트를 셋, 다음 값이 있다는 전제
 		{
 			SetEvent(Player_recv[current_playernumber + 1]);
@@ -443,6 +444,8 @@ void Timer()
 		playerlist[i] = sampleplayerlist[i];
 	}
 
+	int i = 0;
+
 	for (auto &p : playerlist) 
 	{
 		
@@ -464,8 +467,11 @@ void Timer()
 
 		for (auto &d : armytower)
 		{
-			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
+			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5)) {
 				p.cannonball.exist = false;
+				if (i % 2 == 1)
+					d.hp -= 2;
+			}
 		}
 
 		for (auto &d : enemytower)
@@ -473,7 +479,8 @@ void Timer()
 			if (p.cannonball.exist && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 5))
 			{
 				p.cannonball.exist = false;
-				d.hp -= 2;
+				if(i % 2 == 0)
+					d.hp -= 2;
 			}
 		}
 
@@ -498,6 +505,8 @@ void Timer()
 				d.hp -= 2;
 			}
 		}
+
+		i++;
 	}
 
 	

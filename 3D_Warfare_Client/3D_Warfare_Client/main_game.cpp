@@ -9,7 +9,7 @@
 #include "basetower.h"
 #include "guardian.h"
 
-#define SERVERIP   "127.0.0.1"
+#define SERVERIP   "192.168.82.92"
 #define SERVERPORT 9000
 
 // 오류 출력 함수
@@ -218,7 +218,8 @@ void Client_Players_recv()
 	for (int i = 0; i < totalplayernumber; i++)
 		playerlist.push_back(playerdata[i]);
 
-	self.cannonball.exist = playerlist[playernumber].cannonball.exist;
+	if(self.cannonball.exist != playerlist[playernumber].cannonball.exist)
+		self.cannonball.exist = playerlist[playernumber].cannonball.exist;
 }
 
 void Tankrecv()
@@ -227,6 +228,7 @@ void Tankrecv()
 	char* Tankdatabuf;
 	Tank_data* tempTankdata;
 
+	
 	// 아군 탱크
 	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 아군 탱크 수 받아오기
 	if (retval == SOCKET_ERROR) {
