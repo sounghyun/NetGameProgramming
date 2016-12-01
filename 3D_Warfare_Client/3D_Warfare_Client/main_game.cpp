@@ -54,6 +54,7 @@ Ball_data* ballbuf;
 GLint LRcontral, UDcontral;
 int playernumber;							//플레이어 번호
 int totalplayernumber;						//전체 플레이어 숫자
+bool onoff;
 
 void main(int argc, char *argv[])
 {
@@ -179,8 +180,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		Client_Players_recv();
 
-		system("cls");
-
 		SetEvent(hReadEvent); // 읽기 완료 알리기
 	}
 
@@ -191,6 +190,12 @@ void Client_Players_send()
 {
 	int retval;
 	player_data buf;
+
+	if (onoff) {
+		self.ballcreate();
+		onoff = false;
+	}
+
 	buf = self;
 	retval = send(sock, (char*)&buf, sizeof(player_data), 0);		// 플레이어 정보 보내기
 }
@@ -213,7 +218,7 @@ void Client_Players_recv()
 	for (int i = 0; i < totalplayernumber; i++)
 		playerlist.push_back(playerdata[i]);
 
-	
+	self.cannonball.exist = playerlist[playernumber].cannonball.exist;
 }
 
 void Tankrecv()
@@ -480,9 +485,9 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 	if (key == 'm')
 		viewmode = (viewmode + 1) % 2;
 
-	if (key == 32 && self.cannonball.exist == false && self.cannonball.delaytime == 0)
+	if (key == 32 && self.cannonball.exist == false && self.cannonball.delaytime == 0 && !onoff)
 	{
-		self.ballcreate();
+		onoff = true;
 	}
 
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_ON);

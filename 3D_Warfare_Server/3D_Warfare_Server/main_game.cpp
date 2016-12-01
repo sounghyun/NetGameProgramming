@@ -24,11 +24,11 @@ GLvoid setup();
 template<class Object>
 bool collision(Point p1, Object p2);
 
-void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
-void GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
-void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
-void Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int num);
-void Server_Player_send(SOCKET client_sock);
+int TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
+int GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
+int TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
+int Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int num);
+int Server_Player_send(SOCKET client_sock);
 
 CRITICAL_SECTION cs; // 임계 영역
 
@@ -175,6 +175,9 @@ DWORD WINAPI ServerMain(LPVOID arg)
 		printf("\r\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\r\n",
 			inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
+		if (playernumber > 4)
+			break;
+
 		// 스레드 생성
 		hThread = CreateThread(NULL, 0, ProcessClient,
 			(LPVOID)client_sock, 0, NULL);
@@ -228,18 +231,12 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 	sampleplayerlist.push_back(buf);
 	playerlist.push_back(buf);
-
 	DeleteCriticalSection(&cs);
 
 	while (1) {
 		WaitForSingleObject(Player_recv[current_playernumber], INFINITE);
 
-		printf("\r\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\r\n",
-			inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
-
-		system("cls");
-
-		Server_Player_recv(client_sock, clientaddr, current_playernumber);
+		retval = Server_Player_recv(client_sock, clientaddr, current_playernumber);
 
 		if (playernumber - 1 > current_playernumber)					//자신의 다음 플레이어의 이벤트를 셋, 다음 값이 있다는 전제
 		{
@@ -253,11 +250,14 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 		WaitForSingleObject(Player_send[current_playernumber], INFINITE);
 
-		TankSend(client_sock, clientaddr);
-		GuardianSend(client_sock, clientaddr);
-		TowerSend(client_sock, clientaddr);
+		retval = TankSend(client_sock, clientaddr);
 
-		Server_Player_send(client_sock);	
+		retval = GuardianSend(client_sock, clientaddr);
+
+		retval = TowerSend(client_sock, clientaddr);
+
+		retval = Server_Player_send(client_sock);
+
 
 
 		if (playernumber - 1 > current_playernumber)					//자신의 다음 플레이어의 이벤트를 셋, 다음 값이 있다는 전제
@@ -279,29 +279,38 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	return 0;
 }
 
-void Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int current_playernumber)
+int Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int current_playernumber)
 {
 	int retval;
 	player_data buf;
 	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);		// 플레이어 정보 받기
-																			//sampleplayerlist[current_playernumber] = (Player)&buf;
+	
 	sampleplayerlist[current_playernumber] = buf;
+
+	return retval;
 }
 
-void Server_Player_send(SOCKET client_sock)
+int Server_Player_send(SOCKET client_sock)
 {
 	int retval;
 	player_data *buf;
 	buf = new player_data[playernumber];
 	retval = send(client_sock, (char*)(&playernumber), sizeof(int), 0);
+	if (retval == SOCKET_ERROR) {
+		return retval;
+	}
 	int i = 0;
 	for (auto& d : playerlist)
 		buf[i++] = d;
 	retval = send(client_sock, (char*)buf, sizeof(player_data)*(playernumber), 0);
+	if (retval == SOCKET_ERROR) {
+		return retval;
+	}
 
+	return retval;
 }
 
-void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
+int TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 {
 	int retval, num;
 	Tank_data* temptankbuf;
@@ -311,7 +320,7 @@ void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)&num, sizeof(int), 0);		// 출현중인 아군 탱크 수 전송
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	temptankbuf = new Tank_data[num];
@@ -322,7 +331,7 @@ void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)temptankbuf, sizeof(Tank_data) * num, 0);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	// 적군 탱크
@@ -330,7 +339,7 @@ void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)&num, sizeof(int), 0);		// 출현중인 적군 탱크 수 전송
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	temptankbuf = new Tank_data[num];
@@ -341,12 +350,13 @@ void TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)temptankbuf, sizeof(Tank_data) * num, 0);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
+	return retval;
 }
 
-void GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
+int GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 {
 
 	int retval;
@@ -356,7 +366,7 @@ void GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 	// 아군 가디언 HP
 	retval = send(client_sock, (char*)&GuardianBuf, sizeof(Guardian_Data), 0);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	GuardianBuf = enemyGuardian;
@@ -364,11 +374,13 @@ void GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 	// 적군 가디언
 	retval = send(client_sock, (char*)&GuardianBuf, sizeof(Guardian_Data), 0);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
+
+	return retval;
 }
 
-void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
+int TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 {
 	int retval, num;
 	Tower_data* tempTowerbuf;
@@ -378,7 +390,7 @@ void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)&num, sizeof(int), 0);		// 출현중인 아군 타워 수 전송
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	tempTowerbuf = new Tower_data[num];
@@ -389,7 +401,7 @@ void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)tempTowerbuf, sizeof(Tower_data) * num, 0);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	// 적군 타워
@@ -397,7 +409,7 @@ void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)&num, sizeof(int), 0);		// 출현중인 아군 타워 수 전송
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
 
 	tempTowerbuf = new Tower_data[num];
@@ -408,13 +420,14 @@ void TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 	retval = send(client_sock, (char*)tempTowerbuf, sizeof(Tower_data) * num, 0);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
+		return retval;
 	}
+
+	return retval;
 }
 
 void Timer()
 {
-	InitializeCriticalSection(&cs);
 	Ttime++;
 	if (Ttime % 800 == 0)
 	{
@@ -532,8 +545,6 @@ void Timer()
 
 	armyGuardian.guardianmove();
 	enemyGuardian.guardianmove();
-
-	DeleteCriticalSection(&cs);
 }
 
 GLvoid setup()
