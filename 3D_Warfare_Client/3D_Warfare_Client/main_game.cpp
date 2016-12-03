@@ -9,7 +9,7 @@
 #include "basetower.h"
 #include "guardian.h"
 
-#define SERVERIP   "192.168.82.92"
+#define SERVERIP   "112.157.55.149"
 #define SERVERPORT 9000
 
 // 오류 출력 함수
@@ -69,6 +69,7 @@ void main(int argc, char *argv[])
 
 	// 소켓 통신 스레드 생성
 	CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
+
 
 	//초기화 함수들
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // 디스플레이 모드 설정
@@ -153,8 +154,9 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	self.y = 0;
 	self.x = 100;
+	self.id = playernumber;
 
-	if (playernumber % 2 == 1)
+	if (self.id % 2 == 1)
 	{
 		self.z = -465;
 		self.angle = 180;
@@ -218,8 +220,8 @@ void Client_Players_recv()
 	for (int i = 0; i < totalplayernumber; i++)
 		playerlist.push_back(playerdata[i]);
 
-	if(self.cannonball.exist != playerlist[playernumber].cannonball.exist)
-		self.cannonball.exist = playerlist[playernumber].cannonball.exist;
+	if(self.cannonball.exist != playerlist[self.id].cannonball.exist)
+		self.cannonball.exist = playerlist[self.id].cannonball.exist;
 }
 
 void Tankrecv()
@@ -240,20 +242,21 @@ void Tankrecv()
 
 	armytank.clear(); // 과거 시점의 아군 탱크 정보 초기화
 
-	Tankdatabuf = new char[sizeof(Tank_data) * num];
-	retval = recv(sock, (char*)Tankdatabuf, sizeof(Tank_data) * num, 0);		// 현재 출현중인 아군 탱크 수 받아오기
-	if (retval == SOCKET_ERROR) {
-		err_display("recv()");
-		return;
+	if (num > 0) {
+		Tankdatabuf = new char[sizeof(Tank_data) * num];
+		retval = recv(sock, (char*)Tankdatabuf, sizeof(Tank_data) * num, 0);		// 현재 출현중인 아군 탱크 수 받아오기
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			return;
+		}
+		else if (retval == 0)
+			return;
+
+
+		tempTankdata = (Tank_data*)Tankdatabuf;
+		for (int i = 0; i < num; i++)
+			armytank.push_back(&tempTankdata[i]);
 	}
-	else if (retval == 0)
-		return;
-
-
-	tempTankdata = (Tank_data*)Tankdatabuf;
-	for (int i = 0; i < num; i++)
-		armytank.push_back(&tempTankdata[i]);
-
 	// 적군 탱크
 	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 적군 탱크 수 받아오기
 	if (retval == SOCKET_ERROR) {
@@ -265,19 +268,21 @@ void Tankrecv()
 
 	enemytank.clear(); // 과거 시점의 적군 탱크 정보 초기화
 
-	Tankdatabuf = new char[sizeof(Tank_data) * num];
-	retval = recv(sock, (char*)Tankdatabuf, sizeof(Tank_data) * num, 0);		// 현재 출현중인 아군 탱크 수 받아오기
-	if (retval == SOCKET_ERROR) {
-		err_display("recv()");
-		return;
+	if (num > 0) {
+		Tankdatabuf = new char[sizeof(Tank_data) * num];
+		retval = recv(sock, (char*)Tankdatabuf, sizeof(Tank_data) * num, 0);		// 현재 출현중인 아군 탱크 수 받아오기
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			return;
+		}
+		else if (retval == 0)
+			return;
+
+
+		tempTankdata = (Tank_data*)Tankdatabuf;
+		for (int i = 0; i < num; i++)
+			enemytank.push_back(&tempTankdata[i]);
 	}
-	else if (retval == 0)
-		return;
-
-
-	tempTankdata = (Tank_data*)Tankdatabuf;
-	for (int i = 0; i < num; i++)
-		enemytank.push_back(&tempTankdata[i]);
 }
 
 void Towerrecv()
@@ -297,20 +302,21 @@ void Towerrecv()
 
 	armytower.clear(); // 과거 시점의 아군 타워 정보 초기화
 
-	Towerdatabuf = new char[sizeof(Tower_data) * num];
-	retval = recv(sock, (char*)Towerdatabuf, sizeof(Tower_data) * num, 0);		// 현재 출현중인 아군 타워
-	if (retval == SOCKET_ERROR) {
-		err_display("recv()");
-		return;
+	if (num > 0) {
+		Towerdatabuf = new char[sizeof(Tower_data) * num];
+		retval = recv(sock, (char*)Towerdatabuf, sizeof(Tower_data) * num, 0);		// 현재 출현중인 아군 타워
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			return;
+		}
+		else if (retval == 0)
+			return;
+
+
+		tempTowerdata = (Tower_data*)Towerdatabuf;
+		for (int i = 0; i < num; i++)
+			armytower.push_back(&tempTowerdata[i]);
 	}
-	else if (retval == 0)
-		return;
-
-
-	tempTowerdata = (Tower_data*)Towerdatabuf;
-	for (int i = 0; i < num; i++)
-		armytower.push_back(&tempTowerdata[i]);
-
 	// 적군 타워
 	retval = recv(sock, (char*)&num, sizeof(int), 0);		// 현재 출현중인 적군 타워 수 받아오기
 	if (retval == SOCKET_ERROR) {
@@ -322,19 +328,21 @@ void Towerrecv()
 
 	enemytower.clear(); // 과거 시점의 적군 탱크 정보 초기화
 
-	Towerdatabuf = new char[sizeof(Tower_data) * num];
-	retval = recv(sock, (char*)Towerdatabuf, sizeof(Tower_data) * num, 0);		// 현재 출현중인 적군 타워
-	if (retval == SOCKET_ERROR) {
-		err_display("recv()");
-		return;
+	if (num > 0) {
+		Towerdatabuf = new char[sizeof(Tower_data) * num];
+		retval = recv(sock, (char*)Towerdatabuf, sizeof(Tower_data) * num, 0);		// 현재 출현중인 적군 타워
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+			return;
+		}
+		else if (retval == 0)
+			return;
+
+
+		tempTowerdata = (Tower_data*)Towerdatabuf;
+		for (int i = 0; i < num; i++)
+			enemytower.push_back(&tempTowerdata[i]);
 	}
-	else if (retval == 0)
-		return;
-
-
-	tempTowerdata = (Tower_data*)Towerdatabuf;
-	for (int i = 0; i < num; i++)
-		enemytower.push_back(&tempTowerdata[i]);
 }
 
 void Guardianrecv()
@@ -418,10 +426,9 @@ GLvoid drawScene(GLvoid)
 	else
 	{
 		auto& d = playerlist.begin();
-		int i = 0;
 		while (d != playerlist.end())
 		{
-			if (i++ == playernumber)
+			if (d->id == self.id)
 				self.ranbertank(false);
 			else
 				d->ranbertank(true);

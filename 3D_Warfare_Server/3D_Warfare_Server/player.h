@@ -9,6 +9,7 @@ class Player;
 class player_data
 {
 public:
+	int id;
 	int hp;
 	float x, y, z;
 	int angle;
@@ -20,12 +21,14 @@ public:
 class Player
 {
 public:
+	int id;
 	int hp;
 	float x, y, z;
 	int angle;
 	Ball cannonball;
 
 	Player(player_data ref) :
+		id(ref.id),
 		hp(ref.hp),
 		x(ref.x),
 		y(ref.y),
