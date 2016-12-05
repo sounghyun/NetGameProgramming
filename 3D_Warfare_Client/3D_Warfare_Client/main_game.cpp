@@ -9,7 +9,7 @@
 #include "basetower.h"
 #include "guardian.h"
 
-#define SERVERIP   "112.157.55.149"
+#define SERVERIP   "192.168.21.70"
 #define SERVERPORT 9000
 
 // 오류 출력 함수
@@ -32,6 +32,7 @@ bool collision(Point p1, Object p2);				// 객체, 맵 충돌 체크
 void Guardianrecv();
 void Tankrecv();
 void Towerrecv();
+void Basetowerrecv();
 void Client_Players_send();
 void Client_Players_recv();
 
@@ -40,6 +41,7 @@ HANDLE hReadEvent, hWriteEvent; // 이벤트
 
 bool viewmode = false;	// 뷰 전환 (1인칭시점, 전체뷰)
 GLint Ttime = 0;		// 총 시간
+Basetower_Data* BasetowerBuf;
 Basetower armybase, enemybase;	// 아군본부, 적군본부
 Guardian_Data* GuardianBuf;
 Guardian armyGuardian, enemyGuardian;	// 아군가디언, 적군가디언
@@ -179,6 +181,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		Tankrecv();
 		Guardianrecv();
 		Towerrecv();
+		Basetowerrecv();
 
 		Client_Players_recv();
 
@@ -377,6 +380,40 @@ void Guardianrecv()
 	enemyGuardian = *GuardianBuf;
 
 }
+
+void Basetowerrecv()
+{
+	int retval;
+	char* buf[sizeof(Basetower_Data)];
+
+	// 아군 본진
+	retval = recv(sock, (char*)buf, sizeof(Basetower_Data), 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	BasetowerBuf = (Basetower_Data*)&buf;
+
+	armybase = *BasetowerBuf;
+
+	// 적군 본진
+	retval = recv(sock, (char*)buf, sizeof(Basetower_Data), 0);
+	if (retval == SOCKET_ERROR) {
+		err_display("recv()");
+		return;
+	}
+	else if (retval == 0)
+		return;
+
+	BasetowerBuf = (Basetower_Data*)&buf;
+
+	enemybase = *BasetowerBuf;
+
+}
+
 // 윈도우 출력 함수s
 GLvoid drawScene(GLvoid)
 {

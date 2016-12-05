@@ -139,45 +139,4 @@ void Basetower::ranberbasetower()
 	glPopMatrix();
 }
 
-void Basetower::towerattck(Tank *tankobject)
-{
-	if (this->cannonball.exist == false && this->cannonball.delaytime == 0 && this->hp > 0)
-	{
-		if (this->angle)
-			this->cannonball.z = this->z - 10;
-		else
-			this->cannonball.z = this->z + 10;
-		this->cannonball.x = this->x;
-		this->cannonball.track = 0;
-		this->cannonball.y = this->y + 25;
-		this->cannonball.angle = this->angle + 180;
-		this->cannonball.exist = true;
-		this->cannonball.delaytime = 80;
-	}
-	else
-	{
-		this->cannonball.Cannonball_timer(4);
-
-		for (int i = 0; i < 9; i++)
-		{
-			if (this->cannonball.exist && tankobject[i].hp>0 && this->cannonball.collisionball(tankobject[i].x, tankobject[i].y, tankobject[i].z, 10, 10, 10))
-			{
-				this->cannonball.exist = false;
-				tankobject[i].hp -= 2;
-			}
-			tankobject[i].destroytank();
-		}
-	}
-}
-
-void Basetower::destroytower()
-{
-	if (this->hp <= 0 && this->exist)
-	{
-		this->y -= 0.1;
-		if (this->y + 15 < 0)
-			this->exist = false;
-	}
-}
-
 #endif // !BASETOWER

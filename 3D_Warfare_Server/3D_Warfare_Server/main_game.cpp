@@ -27,6 +27,8 @@ bool collision(Point p1, Object p2);
 int TankSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
 int GuardianSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
 int TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
+int BasetowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr);
+
 int Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int num);
 int Server_Player_send(SOCKET client_sock);
 
@@ -35,11 +37,11 @@ CRITICAL_SECTION cs; // 임계 영역
 static int playernumber = 0;
 bool viewmode = false;
 GLint Ttime = 0;
+Basetower_data BasetowerBuf;
 Basetower armybase, enemybase;
 Guardian_Data GuardianBuf;
 Guardian armyGuardian, enemyGuardian;
 list<Tower> armytower, enemytower;
-//Player self(0);
 vector<Player> playerlist;
 Tank_data tankBuf;
 list<Tank> armytank, enemytank;
@@ -47,7 +49,7 @@ Ball_data ballbuf;
 GLint LRcontral, UDcontral;
 
 HANDLE  Servermath;
-vector<HANDLE> Player_recv, Player_send;
+vector<HANDLE*> Player_recv, Player_send;
 
 void main(int argc, char *argv[])
 {
@@ -66,17 +68,23 @@ void main(int argc, char *argv[])
 		WaitForSingleObject(Servermath, INFINITE);
 		ftime(&endtimer);
 
-		timer = endtimer.millitm - startimer.millitm;		// 걸린 시간 계산
+		timer = (endtimer.time*1000+endtimer.millitm) - (startimer.time*1000+startimer.millitm);		// 걸린 시간 계산
 
 		if (timer - oldtimer > 10) {
 			Timer();
-		}
 
-		oldtimer = timer;
-		if (Player_send.size() > 0)									///플레이어가 한명 이상일 경우
-			SetEvent(Player_send[0]);
+			oldtimer = timer;
+
+			if (Player_send.size() > 0)									///플레이어가 한명 이상일 경우
+				SetEvent(*Player_send[0]);
+		}
+		else
+			continue;
 
 	}
+
+	// 윈속 종료
+	WSACleanup();
 }
 
 // 소켓 함수 오류 출력 후 종료
@@ -183,11 +191,10 @@ DWORD WINAPI ServerMain(LPVOID arg)
 		else { CloseHandle(hThread); }
 	}
 
+	printf("최대 클라이언트 접속 완료\n");
 	// closesocket()
 	closesocket(listen_sock);
 
-	// 윈속 종료
-	WSACleanup();
 	return 0;
 }
 
@@ -220,10 +227,10 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		playerevent_recv = CreateEvent(NULL, FALSE, TRUE, NULL);
 	else
 		playerevent_recv = CreateEvent(NULL, FALSE, FALSE, NULL);
-	Player_recv.push_back(playerevent_recv);
+	Player_recv.push_back(&playerevent_recv);
 
 	playerevent_send = CreateEvent(NULL, FALSE, FALSE, NULL);
-	Player_send.push_back(playerevent_send);
+	Player_send.push_back(&playerevent_send);
 
 	player_data buf;
 	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);		// 접속 플레이어 정보 저장
@@ -238,11 +245,11 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		retval = Server_Player_recv(client_sock, clientaddr, current_playernumber);
 
 		// 자신의 recv 이벤트 위치 찾기
-		auto d = find(Player_recv.begin(), Player_recv.end(), playerevent_recv);
+		auto d = find(Player_recv.begin(), Player_recv.end(), &playerevent_recv);
 
 		// 다음 recv 이벤트가 있는지 검사 후 있으면 실행
 		while (++d != Player_recv.end()) {
-			SetEvent(*d);
+			SetEvent(**d);
 			break;
 		}
 
@@ -257,27 +264,25 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 		printf("%d 번째 플레이어 정보 보내기 \n", current_playernumber);
 
-		retval = TankSend(client_sock, clientaddr);
+		TankSend(client_sock, clientaddr);
+		GuardianSend(client_sock, clientaddr);
+		TowerSend(client_sock, clientaddr);
+		BasetowerSend(client_sock, clientaddr);
 
-		retval = GuardianSend(client_sock, clientaddr);
-
-		retval = TowerSend(client_sock, clientaddr);
-
-		retval = Server_Player_send(client_sock);
-
+		Server_Player_send(client_sock);
 
 		// 자신의 recv 이벤트 위치 찾기
-		d = find(Player_send.begin(), Player_send.end(), playerevent_send);
+		d = find(Player_send.begin(), Player_send.end(), &playerevent_send);
 
 		// 다음 recv 이벤트가 있는지 검사 후 있으면 실행
 		while (++d != Player_send.end()) {
-			SetEvent(*d);
+			SetEvent(**d);
 			break;
 		}
 
 		// 이벤트 목록중 끝까지 갔다면, 연산 이벤트 실행
 		if (d == Player_send.end())
-			SetEvent(Player_recv[0]);
+			SetEvent(*Player_recv[0]);
 	}
 
 	// 연결중인 클라의 플레이어 정보 검색 후 접속 플레이어 리스트에서 삭제
@@ -448,6 +453,30 @@ int TowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 			return retval;
 		}
 	}
+	return retval;
+}
+
+int BasetowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
+{
+
+	int retval;
+
+	BasetowerBuf = armybase;
+
+	// 아군 본진
+	retval = send(client_sock, (char*)&BasetowerBuf, sizeof(Basetower_data), 0);
+	if (retval == SOCKET_ERROR) {
+		return retval;
+	}
+
+	BasetowerBuf = enemybase;
+
+	// 적군 본진
+	retval = send(client_sock, (char*)&BasetowerBuf, sizeof(Basetower_data), 0);
+	if (retval == SOCKET_ERROR) {
+		return retval;
+	}
+
 	return retval;
 }
 

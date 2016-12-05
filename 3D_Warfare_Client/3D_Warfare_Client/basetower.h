@@ -2,9 +2,14 @@
 #define BASETOWER_H
 
 #include "struct_package.h"
-#include "cannonball.h"
 
-class Tank;
+struct Basetower_Data
+{
+	int hp;
+	float x, y, z;
+	int angle;
+	bool exist;
+};
 
 class Basetower
 {
@@ -14,11 +19,21 @@ public:
 	int w, h, r;
 	float angle;
 	bool exist;
-	Ball cannonball;
 
 	Basetower() {};
 
 	void setup(int hp, float x, float z, float angle, bool exist);
+
+	Basetower& operator=(const Basetower_Data& ref) {
+		this->hp = ref.hp;
+		this->x = ref.x;
+		this->y = ref.y;
+		this->z = ref.z;
+		this->angle = ref.angle;
+		this->exist = ref.exist;
+
+		return *this;
+	}
 
 	int GetHP() { return hp; };
 	int GetX() { return x; };
@@ -28,10 +43,6 @@ public:
 	int GetExist() { return exist; };
 
 	void ranberbasetower();
-
-	void towerattck(Tank *tankobject);
-
-	void destroytower();
 };
 
 #endif // !BASETOWER_H

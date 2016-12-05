@@ -17,11 +17,13 @@ void Tank::ranbertank(bool body)
 	{
 		glScaled(0.5, 0.5, 0.5);
 
-		glColor3d(0, 0, 1);
+		if (this->Sangle)
+			glColor3d(0, 0, 1);
+		else
+			glColor3d(1, 0, 0);
 		glTranslated(0, 2, 0);
 		glScaled(2, 1, 2);
 		glutSolidCube(5);
-
 
 		glTranslated(0, 2, 0);
 		glScaled(1, 2.5, 1);
@@ -45,21 +47,6 @@ void Tank::ranbertank(bool body)
 
 	glPopMatrix();
 
-}
-
-
-void Tank::destroytank()
-{
-	if (this->hp <= 0 && this->exist)
-	{
-		this->y -= 0.1;
-		if (this->y + 5 < 0)
-		{
-			this->delaytime--;
-			if (this->delaytime == 0)
-				this->exist = false;
-		}
-	}
 }
 
 #endif // !TANK

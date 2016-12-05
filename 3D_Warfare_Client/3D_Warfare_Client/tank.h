@@ -50,8 +50,6 @@ public:
 			this->time = 2730;
 	};
 	void ranbertank(bool body);
-
-	void destroytank();
 };
 
 #endif // !TANK_H

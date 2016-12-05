@@ -27,11 +27,15 @@ void Player::ranbertank(bool body)
 
 		glScaled(0.5, 0.5, 0.5);
 
-		glColor3d(0, 0, 1);
+		glColor3d(0, 0, 0);
 		glTranslated(0, 2, 0);
 		glScaled(2, 1, 2);
 		glutSolidCube(5);
 
+		if (this->id % 2)
+			glColor3d(0, 0, 1);
+		else
+			glColor3d(1, 0, 0);
 		glTranslated(0, 2, 0);
 		glScaled(1, 2.5, 1);
 		glutSolidCube(3);

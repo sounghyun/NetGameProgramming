@@ -21,7 +21,7 @@ public:
 	bool exist;
 	Ball cannonball;
 
-	Tank(float angle, int way) : hp(5), 
+	Tank(float angle, int way) : hp(2), 
 								 Sangle(angle),
 								 angle(90 * (way - 1) + angle),
 								 x(100),

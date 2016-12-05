@@ -10,6 +10,7 @@ struct Guardian_Data
 	int angle;
 	float Rangle, Langle;
 	bool RLck;
+	bool exist;
 
 
 };
@@ -35,14 +36,13 @@ public:
 		this->Rangle = ref.Rangle;
 		this->Langle = ref.Langle;
 		this->RLck = ref.RLck;
+		this->exist = ref.exist;
 
 		return *this;
 	}
 
 	void createguardian(float angle);
 	void ranberguardian();
-	void guardianmove();
-	void destroyguardian();
 };
 
 

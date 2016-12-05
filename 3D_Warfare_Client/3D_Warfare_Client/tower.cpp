@@ -52,7 +52,10 @@ void Tower::ranbertower()
 		for (int i = 0; i < 2; i++)
 		{
 			glBegin(GL_QUADS);
-			glColor3d(0.0f, 1.0f, 1.0f);
+			if (!this->angle)
+				glColor3d(0, 0, 1);
+			else
+				glColor3d(1, 0, 0);
 			glVertex3d(-5, 22.5, 5);
 			glVertex3d(5, 22.5, 5);
 			glVertex3d(5, 22.5, -5);
@@ -63,7 +66,6 @@ void Tower::ranbertower()
 		for (int i = 0; i < 2; i++)
 		{
 			glBegin(GL_QUADS);
-			glColor3d(0.0f, 1.0f, 1.0f);
 			glVertex3d(-5, 30, 5);
 			glVertex3d(-5, 22.5, 5);
 			glVertex3d(-5, 22.5, -5);
@@ -74,7 +76,6 @@ void Tower::ranbertower()
 		for (int i = 0; i < 2; i++)
 		{
 			glBegin(GL_QUADS);
-			glColor3d(0.0f, 1.0f, 1.0f);
 			glVertex3d(-5, 30, 5);
 			glVertex3d(5, 30, 5);
 			glVertex3d(5, 22.5, -5);
