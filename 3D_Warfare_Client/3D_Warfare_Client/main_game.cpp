@@ -9,7 +9,7 @@
 #include "basetower.h"
 #include "guardian.h"
 
-#define SERVERIP   "192.168.21.70"
+#define SERVERIP   "127.0.0.1"
 #define SERVERPORT 9000
 
 // 오류 출력 함수
@@ -47,7 +47,7 @@ Guardian_Data* GuardianBuf;
 Guardian armyGuardian, enemyGuardian;	// 아군가디언, 적군가디언
 Tower_data* TowerBuf;
 list<Tower> armytower, enemytower;
-Player self(0);
+Player self;
 vector <Player> playerlist;
 Tank_data* TankBuf;
 list<Tank> armytank, enemytank;
@@ -154,20 +154,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	retval = recv(sock, (char*)&playernumber, sizeof(int), 0);//플레이어 번호 받기
 	printf("플레이어 번호 : %d\n", playernumber);
 
-	self.y = 0;
-	self.x = 100;
-	self.id = playernumber;
-
-	if (self.id % 2 == 1)
-	{
-		self.z = -465;
-		self.angle = 180;
-	}
-	else
-	{
-		self.z = -35;
-		self.angle = 0;
-	}
+	self.create(playernumber);
 
 	player_data buf;
 	buf = self;
@@ -223,8 +210,18 @@ void Client_Players_recv()
 	for (int i = 0; i < totalplayernumber; i++)
 		playerlist.push_back(playerdata[i]);
 
-	if(self.cannonball.exist != playerlist[self.id].cannonball.exist)
-		self.cannonball.exist = playerlist[self.id].cannonball.exist;
+	for (auto& d : playerlist) {
+		if (d.id == self.id)
+		{
+			self.exist = d.exist;
+			self.hp = d.hp;
+			if (self.hp <= 0) {
+				self.y = d.y;
+			}
+			if (self.cannonball.exist != d.cannonball.exist)
+				self.cannonball.exist = d.cannonball.exist;
+		}
+	}
 }
 
 void Tankrecv()
@@ -523,15 +520,12 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 {
 	if (key == 'i')
 	{
-		self.angle = 0;
-		self.y = 0;
-		self.z = -35;
-		self.x = 100;
+		self.create(playernumber);
 	}
 	if (key == 'm')
 		viewmode = (viewmode + 1) % 2;
 
-	if (key == 32 && self.cannonball.exist == false && self.cannonball.delaytime == 0 && !onoff)
+	if (key == 32 && self.cannonball.exist == false && self.cannonball.delaytime == 0 && !onoff && self.y >= 0)
 	{
 		onoff = true;
 	}
@@ -542,14 +536,16 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 
 GLvoid SpecialKeyborad(int key, int x, int y)
 {
-	if (key == GLUT_KEY_UP)
-		UDcontral = 1;
-	if (key == GLUT_KEY_DOWN)
-		UDcontral = 2;
-	if (key == GLUT_KEY_LEFT)
-		LRcontral = 1;
-	if (key == GLUT_KEY_RIGHT)
-		LRcontral = 2;
+	if (self.hp > 0) {
+		if (key == GLUT_KEY_UP)
+			UDcontral = 1;
+		if (key == GLUT_KEY_DOWN)
+			UDcontral = 2;
+		if (key == GLUT_KEY_LEFT)
+			LRcontral = 1;
+		if (key == GLUT_KEY_RIGHT)
+			LRcontral = 2;
+	}
 	glutPostRedisplay();
 }
 GLvoid SpecialUPKeyborad(int key, int x, int y)
@@ -562,60 +558,63 @@ GLvoid SpecialUPKeyborad(int key, int x, int y)
 }
 GLvoid TimerFunction(int value)
 {
-	if (UDcontral == 1)
-	{
-		self.x -= 0.5*sin(self.angle * (3.14 / 180));
-		self.z -= 0.5*cos(self.angle * (3.14 / 180));
-		for (int y = 0; y < 3; y++)
+	if (self.hp > 0) {
+		if (UDcontral == 1)
 		{
-			for (int x = 0; x < 20; x++)
+			self.x -= 0.5*sin(self.angle * (3.14 / 180));
+			self.z -= 0.5*cos(self.angle * (3.14 / 180));
+			for (int y = 0; y < 3; y++)
 			{
-				for (int z = 0; z < 50; z++)
+				for (int x = 0; x < 20; x++)
 				{
-					if (((Map[x][y][z].state != 2 && Map[x][y][z].state != 4 && Map[x][y][z].state != 3 && Map[x][y][z].state) || (Map[x][y][z].state == 2 && (z<5 || z > 45))) && collision(Map[x][y][z], self))
+					for (int z = 0; z < 50; z++)
 					{
-						self.x += 0.5*sin(self.angle * (3.14 / 180));
-						self.z += 0.5*cos(self.angle * (3.14 / 180));
+						if (((Map[x][y][z].state != 2 && Map[x][y][z].state != 4 && Map[x][y][z].state != 3 && Map[x][y][z].state) || (Map[x][y][z].state == 2 && (z < 5 || z > 45))) && collision(Map[x][y][z], self))
+						{
+							self.x += 0.5*sin(self.angle * (3.14 / 180));
+							self.z += 0.5*cos(self.angle * (3.14 / 180));
+						}
 					}
 				}
 			}
 		}
-	}
-	if (UDcontral == 2)
-	{
-		self.x += 0.5*sin(self.angle * (3.14 / 180));
-		self.z += 0.5*cos(self.angle * (3.14 / 180));
-		for (int y = 0; y < 3; y++)
+		if (UDcontral == 2)
 		{
-			for (int x = 0; x < 20; x++)
+			self.x += 0.5*sin(self.angle * (3.14 / 180));
+			self.z += 0.5*cos(self.angle * (3.14 / 180));
+			for (int y = 0; y < 3; y++)
 			{
-				for (int z = 0; z < 50; z++)
+				for (int x = 0; x < 20; x++)
 				{
-					if (((Map[x][y][z].state != 2 && Map[x][y][z].state != 4 && Map[x][y][z].state) || (Map[x][y][z].state == 2 && (z<5 || z > 45))) && collision(Map[x][y][z], self))
+					for (int z = 0; z < 50; z++)
 					{
-						self.x -= 0.5*sin(self.angle * (3.14 / 180));
-						self.z -= 0.5*cos(self.angle * (3.14 / 180));
+						if (((Map[x][y][z].state != 2 && Map[x][y][z].state != 4 && Map[x][y][z].state) || (Map[x][y][z].state == 2 && (z < 5 || z > 45))) && collision(Map[x][y][z], self))
+						{
+							self.x -= 0.5*sin(self.angle * (3.14 / 180));
+							self.z -= 0.5*cos(self.angle * (3.14 / 180));
+						}
 					}
 				}
 			}
 		}
+		if (LRcontral == 1)
+			self.angle += 1;
+		if (LRcontral == 2)
+			self.angle -= 1;
+
+		if (self.y > 9)
+			self.y -= 10;
+		for (int y = 0; y < 3; y++)
+			for (int x = 0; x < 20; x++)
+				for (int z = 0; z < 50; z++)
+					if (Map[x][y][z].state == 3 && collision(Map[x][y][z], self))
+						self.y += 10;
+
+		if (self.cannonball.exist || self.cannonball.delaytime)
+			self.cannonball.Cannonball_timer(0.2);
 	}
-	if (LRcontral == 1)
-		self.angle += 1;
-	if (LRcontral == 2)
-		self.angle -= 1;
-
-	if (self.y > 9)
-		self.y-=10;
-	for (int y = 0; y < 3; y++)
-		for (int x = 0; x < 20; x++)
-			for (int z = 0; z < 50; z++)
-				if (Map[x][y][z].state == 3 && collision(Map[x][y][z], self))
-					self.y += 10;
-
-	if(self.cannonball.exist || self.cannonball.delaytime)
-		self.cannonball.Cannonball_timer(0.2);
-
+	if (!self.exist)
+		self.create(playernumber);
 
 	glutPostRedisplay();
 	glutTimerFunc(1, TimerFunction, 1);
@@ -624,11 +623,6 @@ GLvoid TimerFunction(int value)
 GLvoid setup()
 {
 	mapload();
-
-	self.angle = 0;
-	self.y = 0;
-	self.z = -35;
-	self.x = 100;
 
 	armybase.setup(20, 100, -20, 180, true);
 	enemybase.setup(20, 100, -480, 0, true);

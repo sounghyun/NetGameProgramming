@@ -13,6 +13,7 @@ public:
 	int hp;
 	float x, y, z;
 	int angle;
+	bool exist;
 	Ball cannonball;
 
 	player_data&  operator=(const Player& ref);
@@ -25,6 +26,7 @@ public:
 	int hp;
 	float x, y, z;
 	int angle;
+	bool exist;
 	Ball cannonball;
 
 	Player(player_data ref) :
@@ -34,8 +36,11 @@ public:
 		y(ref.y),
 		z(ref.z),
 		angle(ref.angle),
+		exist(ref.exist),
 		cannonball(ref.cannonball)
 	{}
+
+	void destroy();
 };
 
 #endif

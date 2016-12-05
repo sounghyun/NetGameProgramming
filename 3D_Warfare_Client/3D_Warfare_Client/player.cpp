@@ -11,9 +11,30 @@ player_data&  player_data::operator=(const Player& ref)
 	this->y = ref.y;
 	this->z = ref.z;
 	this->angle = ref.angle;
+	this->exist = ref.exist;
 	this->cannonball = ref.cannonball;
 
 	return *this;
+}
+
+void Player::create(int number)
+{
+	this->hp = 2;
+	this->y = 0;
+	this->x = 100;
+	this->id = number;
+
+	if (this->id % 2 == 1)
+	{
+		this->z = -465;
+		this->angle = 180;
+	}
+	else
+	{
+		this->z = -35;
+		this->angle = 0;
+	}
+	this->exist = true;
 }
 
 void Player::ranbertank(bool body)

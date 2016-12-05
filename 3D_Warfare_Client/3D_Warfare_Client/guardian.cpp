@@ -3,21 +3,6 @@
 
 #include "guardian.h"
 
-void Guardian::createguardian(float angle)
-{
-	this->hp = 20;
-	this->Sangle = angle;
-	this->angle = 90 + angle;
-	if (this->Sangle)
-		this->z = -460;
-	else
-		this->z = -40;
-	this->x = 100;
-	this->y = 0;
-	this->exist = true;
-	this->time = 250;
-}
-
 void Guardian::ranberguardian()
 {
 	glPushMatrix();

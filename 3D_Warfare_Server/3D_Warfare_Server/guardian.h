@@ -25,7 +25,7 @@ struct Guardian_Data
 {
 	int hp;
 	float x, y, z;
-	int angle;
+	int angle, Sangle;
 	float Rangle, Langle;
 	bool RLck;
 
@@ -35,6 +35,7 @@ struct Guardian_Data
 		this->y = ref.y;
 		this->z = ref.z;
 		this->angle = ref.angle;
+		this->Sangle = ref.Sangle;
 		this->Rangle = ref.Rangle;
 		this->Langle = ref.Langle;
 		this->RLck = ref.RLck;

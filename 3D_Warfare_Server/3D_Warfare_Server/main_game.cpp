@@ -60,27 +60,23 @@ void main(int argc, char *argv[])
 	CreateThread(NULL, 0, ServerMain, NULL, 0, NULL);
 	Servermath = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	struct timeb startimer, endtimer;
+	struct timeb starttimer, endtimer;
 	int timer = 0, oldtimer = 0;
 
-	ftime(&startimer);	// 타이머 시작 시간
+	ftime(&starttimer);	// 타이머 시작 시간
 	while (1) {
 		WaitForSingleObject(Servermath, INFINITE);
 		ftime(&endtimer);
 
-		timer = (endtimer.time*1000+endtimer.millitm) - (startimer.time*1000+startimer.millitm);		// 걸린 시간 계산
+		timer = (endtimer.time*1000+endtimer.millitm) - (starttimer.time*1000+ starttimer.millitm);		// 걸린 시간 계산
 
 		if (timer - oldtimer > 10) {
 			Timer();
 
 			oldtimer = timer;
-
-			if (Player_send.size() > 0)									///플레이어가 한명 이상일 경우
-				SetEvent(*Player_send[0]);
 		}
-		else
-			continue;
-
+		if (Player_send.size() > 0)									///플레이어가 한명 이상일 경우
+			SetEvent(*Player_send[0]);
 	}
 
 	// 윈속 종료
@@ -241,7 +237,6 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	while (1) {
 		WaitForSingleObject(playerevent_recv, INFINITE);
 
-		printf("%d 번째 플레이어 정보 받기 \n", current_playernumber);
 		retval = Server_Player_recv(client_sock, clientaddr, current_playernumber);
 
 		// 자신의 recv 이벤트 위치 찾기
@@ -261,8 +256,6 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 			break;
 
 		WaitForSingleObject(playerevent_send, INFINITE);
-
-		printf("%d 번째 플레이어 정보 보내기 \n", current_playernumber);
 
 		TankSend(client_sock, clientaddr);
 		GuardianSend(client_sock, clientaddr);
@@ -289,8 +282,8 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	playerlist.erase(remove_if(playerlist.begin(), playerlist.end(), [&](Player A)->bool {return A.id == current_playernumber; }), playerlist.end());
 
 	// 연결중인 클라와 연관된 이벤트를 리스트에서 제거
-	Player_recv.erase(remove(Player_recv.begin(), Player_recv.end(), playerevent_recv), Player_recv.end());
-	Player_send.erase(remove(Player_send.begin(), Player_send.end(), playerevent_send), Player_send.end());
+	Player_recv.erase(remove(Player_recv.begin(), Player_recv.end(), &playerevent_recv), Player_recv.end());
+	Player_send.erase(remove(Player_send.begin(), Player_send.end(), &playerevent_send), Player_send.end());
 
 	// closesocket()
 	closesocket(client_sock);
@@ -482,7 +475,6 @@ int BasetowerSend(SOCKET client_sock, SOCKADDR_IN clientaddr)
 
 void Timer()
 {
-	printf("연산 시작 \n");
 	Ttime++;
 	if (Ttime % 800 == 0)
 	{
@@ -495,7 +487,6 @@ void Timer()
 
 	for (auto &p : playerlist) 
 	{
-		
 		if (p.cannonball.exist)
 			for (int y = 0; y < 3; y++)
 				for (int x = 0; x < 20; x++)
@@ -503,6 +494,17 @@ void Timer()
 						if (Map[x][y][z].state == 1 && p.cannonball.collisionball(Map[x][y][z].x, Map[x][y][z].y, Map[x][y][z].z, 5, 5, 5))
 							p.cannonball.exist = false;
 
+		for (auto &d : playerlist)
+		{
+			if (p.cannonball.exist && p.id != d.id && d.hp > 0 && p.cannonball.collisionball(d.x, d.y, d.z, 10, 10, 10))
+			{
+				p.cannonball.exist = false;
+				if (p.id % 2 != d.id % 2) {
+					d.hp -= 2;
+					printf("%d의 상대팀 피격! \n", p.id);
+				}
+			}
+		}
 		if (p.cannonball.exist && armybase.hp > 0 && p.cannonball.collisionball(armybase.x, armybase.y, armybase.z, 10, 10, 10))
 		{
 			p.cannonball.exist = false;
@@ -565,20 +567,26 @@ void Timer()
 					d.hp -= 2;
 			}
 		}
-
 	}
 	
+	for (auto &d : playerlist)
+	{
+		d.destroy();
+	}
+
 	armybase.destroytower();
 	enemybase.destroytower();
 
 	for (auto &d : armytower)
 	{
-		d.towerattck(enemytank);
+		if(d.exist)
+			d.towerattck(enemytank);
 		d.destroytower();
 	}
 	for (auto &d : enemytower)
 	{
-		d.towerattck(enemytank);
+		if(d.exist)
+			d.towerattck(enemytank);
 		d.destroytower();
 	}
 

@@ -12,6 +12,7 @@ struct player_data
 	int hp;
 	float x, y, z;
 	int angle;
+	bool exist;
 	Ball cannonball;
 
 	player_data& operator=(const Player& ref);
@@ -24,14 +25,10 @@ public:
 	int hp;
 	float x, y, z;
 	int angle;
+	bool exist;
 	Ball cannonball;
 
-	Player(int angle) :
-		x(100),
-		y(0),
-		z(-35),
-		angle(angle)
-	{}
+	Player() {}
 
 	Player(player_data ref) :
 		id(ref.id),
@@ -40,8 +37,11 @@ public:
 		y(ref.y),
 		z(ref.z),
 		angle(ref.angle),
+		exist(ref.exist),
 		cannonball(ref.cannonball)
 	{}
+
+	void create(int number);
 
 	void ranbertank(bool body);
 
