@@ -57,6 +57,7 @@ GLint LRcontral, UDcontral;
 int playernumber;							//플레이어 번호
 int totalplayernumber;						//전체 플레이어 숫자
 bool onoff;
+bool reset=false;
 
 void main(int argc, char *argv[])
 {
@@ -186,6 +187,10 @@ void Client_Players_send()
 	if (onoff) {
 		self.ballcreate();
 		onoff = false;
+	}
+	if (reset)
+	{
+
 	}
 
 	buf = self;
@@ -529,6 +534,8 @@ GLvoid Keyborad(unsigned char key, int x, int y)
 	{
 		onoff = true;
 	}
+	if (key == 'r')
+		reset = true;
 
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_ON);
 	glutPostRedisplay();

@@ -19,7 +19,7 @@ player_data&  player_data::operator=(const Player& ref)
 
 void Player::create(int number)
 {
-	this->hp = 2;
+	this->hp = 10;
 	this->y = 0;
 	this->x = 100;
 	this->id = number;
@@ -67,6 +67,12 @@ void Player::ranbertank(bool body)
 		glTranslated(0, 1, -5);
 		glScaled(1, 0.5, 5);
 		glutSolidCube(1);
+
+		glColor3d(1, 1, 0);
+		glTranslated(0, 2, 0);
+		glRotated(90, 0, 1, 0);
+		glScaled(0.3, 0.5, this->hp);
+		glutSolidCube(1);
 	}
 	else
 	{
@@ -78,6 +84,12 @@ void Player::ranbertank(bool body)
 		glRotated(30, 1, 0, 0);
 		glScaled(1, 0.25, 3);
 		glutSolidCube(0.75);
+
+		glColor3d(1, 0, 0);
+		glTranslated(1.2, 1.8, 0);
+		glRotated(90, 0, 1, 0);
+		glScaled(1/10, 0.3, (float)this->hp/10);
+		glutSolidCube(1);
 	}
 
 	glPopMatrix();

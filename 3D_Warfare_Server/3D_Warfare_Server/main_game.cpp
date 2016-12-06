@@ -177,8 +177,8 @@ DWORD WINAPI ServerMain(LPVOID arg)
 		printf("\r\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\r\n",
 			inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
-		if (playernumber > 4)
-			break;
+		if (playerlist.size() > 4)
+			continue;
 
 		// 스레드 생성
 		hThread = CreateThread(NULL, 0, ProcessClient,
@@ -298,7 +298,9 @@ int Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int current_p
 	int retval;
 	player_data buf;
 	retval = recv(client_sock, (char*)&buf, sizeof(player_data), 0);		// 플레이어 정보 받기
-	
+	if (retval == SOCKET_ERROR || retval == 0) {
+		return retval;
+	}
 	playerlist[current_playernumber] = buf;
 
 	return retval;
@@ -581,12 +583,34 @@ void Timer()
 	{
 		if(d.exist)
 			d.towerattck(enemytank);
+		for (auto &p : playerlist)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(p.x, p.y, p.z, 10, 10, 10))
+			{
+				d.cannonball.exist = false;
+				if (p.id % 2 != 1) {
+					p.hp -= 1;
+					printf("%d의 상대팀 피격! \n", p.id);
+				}
+			}
+		}
 		d.destroytower();
 	}
 	for (auto &d : enemytower)
 	{
 		if(d.exist)
 			d.towerattck(enemytank);
+		for (auto &p : playerlist)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(p.x, p.y, p.z, 10, 10, 10))
+			{
+				d.cannonball.exist = false;
+				if (p.id % 2 != 0) {
+					p.hp -= 1;
+					printf("%d의 상대팀 피격! \n", p.id);
+				}
+			}
+		}
 		d.destroytower();
 	}
 
@@ -598,6 +622,17 @@ void Timer()
 	{
 		if (d.exist)
 			d.tankmove(enemytank, enemytower, &enemyGuardian, &enemybase);
+		for (auto &p : playerlist)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(p.x, p.y, p.z, 10, 10, 10))
+			{
+				d.cannonball.exist = false;
+				if (p.id % 2 != 1) {
+					p.hp -= 1;
+					printf("%d의 상대팀 피격! \n", p.id);
+				}
+			}
+		}
 		d.destroytank();
 	}
 
@@ -605,6 +640,17 @@ void Timer()
 	{
 		if (d.exist)
 			d.tankmove(armytank, armytower, &armyGuardian, &armybase);
+		for (auto &p : playerlist)
+		{
+			if (d.cannonball.exist && d.hp > 0 && d.cannonball.collisionball(p.x, p.y, p.z, 10, 10, 10))
+			{
+				d.cannonball.exist = false;
+				if (p.id % 2 != 0) {
+					p.hp -= 1;
+					printf("%d의 상대팀 피격! \n", p.id);
+				}
+			}
+		}
 		d.destroytank();
 	}
 
@@ -616,6 +662,9 @@ void Timer()
 
 	armyGuardian.guardianmove();
 	enemyGuardian.guardianmove();
+
+	if (!armybase.exist || !enemybase.exist)
+		setup();
 }
 
 GLvoid setup()
@@ -624,6 +673,15 @@ GLvoid setup()
 
 	armybase.setup(20, 100, -20, 180, true);
 	enemybase.setup(20, 100, -480, 0, true);
+
+	armytower.clear();
+	enemytower.clear();
+	armytank.clear();
+	enemytank.clear();
+	Ttime = 0;
+
+	for (auto& d : playerlist)
+		d.exist = false;
 
 	for (int x = 0; x < 20; x++)
 	{
