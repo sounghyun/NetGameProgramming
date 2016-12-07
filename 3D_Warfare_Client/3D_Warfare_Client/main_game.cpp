@@ -188,6 +188,10 @@ void Client_Players_send()
 		self.ballcreate();
 		onoff = false;
 	}
+	if (reset)
+	{
+
+	}
 
 	buf = self;
 	retval = send(sock, (char*)&buf, sizeof(player_data), 0);		// 플레이어 정보 보내기
@@ -200,28 +204,27 @@ void Client_Players_recv()
 	char* playerdatabuf;
 	player_data* playerdata;
 
+	playerdatabuf = new char[sizeof(player_data)*totalplayernumber];
+
+
 	playerlist.clear();
-	if (totalplayernumber > 0) {
-		playerdatabuf = new char[sizeof(player_data)*totalplayernumber];
+	recv(sock, (char*)playerdatabuf, sizeof(player_data) * totalplayernumber, 0);
 
-		recv(sock, (char*)playerdatabuf, sizeof(player_data) * totalplayernumber, 0);
+	playerdata = (player_data*)playerdatabuf;
 
-		playerdata = (player_data*)playerdatabuf;
+	for (int i = 0; i < totalplayernumber; i++)
+		playerlist.push_back(playerdata[i]);
 
-		for (int i = 0; i < totalplayernumber; i++)
-			playerlist.push_back(playerdata[i]);
-
-		for (auto& d : playerlist) {
-			if (d.id == self.id)
-			{
-				self.exist = d.exist;
-				self.hp = d.hp;
-				if (self.hp <= 0) {
-					self.y = d.y;
-				}
-				if (self.cannonball.exist != d.cannonball.exist)
-					self.cannonball.exist = d.cannonball.exist;
+	for (auto& d : playerlist) {
+		if (d.id == self.id)
+		{
+			self.exist = d.exist;
+			self.hp = d.hp;
+			if (self.hp <= 0) {
+				self.y = d.y;
 			}
+			if (self.cannonball.exist != d.cannonball.exist)
+				self.cannonball.exist = d.cannonball.exist;
 		}
 	}
 }

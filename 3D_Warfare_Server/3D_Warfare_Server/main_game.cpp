@@ -177,7 +177,7 @@ DWORD WINAPI ServerMain(LPVOID arg)
 		printf("\r\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\r\n",
 			inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
-		if (playerlist.size() > 3)
+		if (playerlist.size() > 4)
 			continue;
 
 		// 스레드 생성
@@ -278,7 +278,6 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 			SetEvent(*Player_recv[0]);
 	}
 
-	InitializeCriticalSection(&cs);
 	// 연결중인 클라의 플레이어 정보 검색 후 접속 플레이어 리스트에서 삭제
 	playerlist.erase(remove_if(playerlist.begin(), playerlist.end(), [&](Player A)->bool {return A.id == current_playernumber; }), playerlist.end());
 
@@ -290,7 +289,7 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	closesocket(client_sock);
 	printf("[TCP 서버] 클라이언트 종료: IP 주소=%s, 포트 번호=%d\r\n",
 		inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
-	DeleteCriticalSection(&cs);
+
 	return 0;
 }
 
@@ -302,32 +301,26 @@ int Server_Player_recv(SOCKET client_sock, SOCKADDR_IN clientaddr, int current_p
 	if (retval == SOCKET_ERROR || retval == 0) {
 		return retval;
 	}
-
-	for(auto& d : playerlist)
-		if(d.id == current_playernumber)
-			d = buf;
+	playerlist[current_playernumber] = buf;
 
 	return retval;
 }
 
 int Server_Player_send(SOCKET client_sock)
 {
-	int retval, num;
+	int retval;
 	player_data *buf;
-	num = playerlist.size();
-	retval = send(client_sock, (char*)(&num), sizeof(int), 0);
+	buf = new player_data[playernumber];
+	retval = send(client_sock, (char*)(&playernumber), sizeof(int), 0);
 	if (retval == SOCKET_ERROR) {
 		return retval;
 	}
-	if (num > 0) {
-		buf = new player_data[num];
-		int i = 0;
-		for (auto& d : playerlist)
-			buf[i++] = d;
-		retval = send(client_sock, (char*)buf, sizeof(player_data)*(num), 0);
-		if (retval == SOCKET_ERROR) {
-			return retval;
-		}
+	int i = 0;
+	for (auto& d : playerlist)
+		buf[i++] = d;
+	retval = send(client_sock, (char*)buf, sizeof(player_data)*(playernumber), 0);
+	if (retval == SOCKET_ERROR) {
+		return retval;
 	}
 
 	return retval;
